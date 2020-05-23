@@ -3,20 +3,25 @@
 % HF 20200522
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-import mmcorej.*
-mmc= CMMCore;
-config = 'config\MMConfig_Ti.cfg'
-addpath(genpath('C:\Program Files\Micro-Manager-2.0gamma'));
-mmc.loadSystemConfiguration(config);
-mmc.waitForSystem()
+  if exist('mmc', 'var')
+        warning("Don't initialize MMCore again!");
+  else
+    mmc = initialize('C:\Users\qblab\Documents\MMConfig_Ti.cfg');
+  end
+
 mmc.getExposure()
 mmc.setExposure(5)
- mmc.waitForImageSynchro()
- mmc.getProperty('TIPFSStatus', 'State')
- mmc.setProperty('TIPFSOffset', 'State', 'Off')
+mmc.waitForImageSynchro()
+% set XY position
+mmc.setXYPosition(mmc.getXPosition, mmc.getYPosition)
+% set Z position
+mmc.setPosition(3800)
+%
+mmc.getProperty('TIPFSStatus', 'State')
+ %mmc.setProperty('TIPFSStatus', 'State', 'Off')
 mmc.getProperty('TIPFSOffset', 'Position')
-mmc.setProperty('TIPFSOffset', 'Position', 96)
-mmc.setProperty('TIPFSOffset', 'State', 'On')
+%mmc.setProperty('TIPFSOffset', 'Position', 96)
+mmc.setProperty('TIPFSStatus', 'State', 'On')
 mmc.snapImage()
 imgtmp = mmc.getImage();
 w = mmc.getImageWidth();
