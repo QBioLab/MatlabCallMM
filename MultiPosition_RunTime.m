@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Capture mulitpositions
-% HF 20200525
+% HF 20200601 low exposure change, add counte to break dead loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if exist('mmc', 'var')
@@ -15,7 +15,7 @@ mmc.setProperty('TIXYDrive', 'SpeedY', 2);
 mmc.setProperty('TILightPath', 'State', '2'); % Use right camera
 mmc.setProperty('TINosePiece', 'Label', '1-Plan Apo 4x NA 0.20 Dry');
 %mmc.setProperty('TINosePiece', 'State', '0');% Choose 4X objective
-mmc.setProperty('LudlWheel', 'State', '0'); % Ludl filter
+mmc.setProperty('LudlWheel', 'State', '2'); % Ludl filter: use green emission filter
 
 EXPOSURE = 15; %10ms
 mmc.setExposure(EXPOSURE);
@@ -39,7 +39,7 @@ for i = 1:pos_num
     mmc.setXYPosition(all_pos(1,i), all_pos(2,i ));
     mmc.setProperty('TIPFSStatus', 'State', 'Off');
     mmc.setPosition(all_pos(3, i));
-    mmc.setProperty('TIPFSOffset', 'Position', 4042/40);
+    mmc.setProperty('TIPFSOffset', 'Position', 4010/40);
     mmc.waitForDevice('TIZDrive');
     mmc.waitForDevice('TIXYDrive');
     if mod(i, 21) == 1
@@ -55,7 +55,7 @@ for i = 1:pos_num
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
     
-    fname = sprintf('D:/CBY/exp0526/well%dxy%d.tiff', well, i);
+    fname = sprintf('D:/CBY/exp0601/well%dxy%d.tiff', well, i);
     % Capture image time by time
     t = 1;
     while( t<=t_len )
@@ -66,8 +66,9 @@ for i = 1:pos_num
         time_map(i, t) = now;
         if t ==1
             EXPOSURE_TMP = EXPOSURE;
+            try_num = 0;
             while( min(img(:)) ==0 )
-                EXPOSURE_TMP = EXPOSURE_TMP*0.7;
+                EXPOSURE_TMP = EXPOSURE_TMP*0.8;
                 mmc.setExposure(EXPOSURE_TMP);
                 mmc.snapImage();
                 mmc.sleep(EXPOSURE_TMP + 10);
@@ -75,6 +76,10 @@ for i = 1:pos_num
                 disp(tmp)
                 img = uint16(reshape(mmc.getImage(), w, h));
                 time_map(i, t) = now;
+                try_num = try_num +1;
+                if (try_num > 10)
+                    break;
+                end
             end
             % Write 1 page tiff
             options.overwrite = true;
@@ -96,4 +101,4 @@ for i = 1:pos_num
     end
 end
 
-save('D:/CBY/exp0526/time_info.mat', 'time_map');
+save('D:/CBY/exp0601/time_info.mat', 'time_map');
