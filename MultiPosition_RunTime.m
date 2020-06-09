@@ -39,7 +39,7 @@ for i = 1:pos_num
     mmc.setXYPosition(all_pos(1,i), all_pos(2,i ));
     mmc.setProperty('TIPFSStatus', 'State', 'Off');
     mmc.setPosition(all_pos(3, i));
-    mmc.setProperty('TIPFSOffset', 'Position', 4010/40);
+    mmc.setProperty('TIPFSOffset', 'Position', 4057/40);
     mmc.waitForDevice('TIZDrive');
     mmc.waitForDevice('TIXYDrive');
     if mod(i, 21) == 1
@@ -50,12 +50,13 @@ for i = 1:pos_num
     end
     % Use PFS for focus
     mmc.setProperty('TIPFSStatus', 'State', 'On');
-    mmc.sleep(200);
+    mmc.sleep(1000); %200);
+    mmc.waitForSystem();
     mmc.setProperty('TIPFSStatus', 'State', 'Off');
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
     
-    fname = sprintf('D:/CBY/exp0601/well%dxy%d.tiff', well, i);
+    fname = sprintf('D:/CBY/exp0608/well%dxy%d.tiff', well, i);
     % Capture image time by time
     t = 1;
     while( t<=t_len )
@@ -101,4 +102,4 @@ for i = 1:pos_num
     end
 end
 
-save('D:/CBY/exp0601/time_info.mat', 'time_map');
+save('D:/CBY/exp0608/time_info.mat', 'time_map');
