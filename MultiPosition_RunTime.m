@@ -32,11 +32,13 @@ w = 2048; h = 2048;
 EXPOSURE_WAIT = EXPOSURE + 10;
 
 time_map = zeros(pos_num, t_len);
+z_map = zeros(pos_num);
 well = 1;
 well_map =  [1:6 12:-1:7];
 
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
-mmc.setPosition(all_pos(3, 1)); % only run at the first time    
+mmc.setPosition(all_pos(3, 1)); % only run at the first time
+
 
 for i = 1:pos_num
     disp(i);
@@ -57,6 +59,7 @@ for i = 1:pos_num
     mmc.sleep(4000); %200);
     mmc.waitForSystem();
     mmc.setProperty('TIPFSStatus', 'State', 'Off');
+    z_map(i) = mmc.getPosition(); % save z postion
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
     
@@ -106,4 +109,4 @@ for i = 1:pos_num
     end
 end
 
-save('F:/cby/exp0611/time_info.mat', 'time_map');
+save('F:/cby/exp0611/all_info.mat', 'time_map', 'z_map');
