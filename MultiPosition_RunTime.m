@@ -15,6 +15,8 @@ mmc.setProperty('TIXYDrive', 'SpeedY', 2);
 mmc.setProperty('TILightPath', 'State', '2'); % Use right camera
 mmc.setProperty('TINosePiece', 'Label', '1-Plan Apo 4x NA 0.20 Dry');
 %mmc.setProperty('TINosePiece', 'State', '0');% Choose 4X objective
+mmc.setProperty('TIFilterBlock1', 'Label', '2-DIA'); % use DIA filter block
+%mmc.setPrpperty('TIFilterBlock1', 'State', '2');
 mmc.setProperty('LudlWheel', 'State', '2'); % Ludl filter: use green emission filter
 
 EXPOSURE = 15; %10ms
@@ -33,13 +35,15 @@ time_map = zeros(pos_num, t_len);
 well = 1;
 well_map =  [1:6 12:-1:7];
 
+mmc.setProperty('TIPFSStatus', 'State', 'Off');
+mmc.setPosition(all_pos(3, 1)); % only run at the first time    
+
 for i = 1:pos_num
     disp(i);
     % Set new position and set PFS
     mmc.setXYPosition(all_pos(1,i), all_pos(2,i ));
-    mmc.setProperty('TIPFSStatus', 'State', 'Off');
-    mmc.setPosition(all_pos(3, i));
-    mmc.setProperty('TIPFSOffset', 'Position', 4057/40);
+    %mmc.setPosition(all_pos(3, i));
+    mmc.setProperty('TIPFSOffset', 'Position', 4041/40);
     mmc.waitForDevice('TIZDrive');
     mmc.waitForDevice('TIXYDrive');
     if mod(i, 21) == 1
@@ -50,13 +54,13 @@ for i = 1:pos_num
     end
     % Use PFS for focus
     mmc.setProperty('TIPFSStatus', 'State', 'On');
-    mmc.sleep(1000); %200);
+    mmc.sleep(4000); %200);
     mmc.waitForSystem();
     mmc.setProperty('TIPFSStatus', 'State', 'Off');
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
     
-    fname = sprintf('D:/CBY/exp0608/well%dxy%d.tiff', well, i);
+    fname = sprintf('F:/cby/exp0611/well%dxy%d.tiff', well, i);
     % Capture image time by time
     t = 1;
     while( t<=t_len )
@@ -102,4 +106,4 @@ for i = 1:pos_num
     end
 end
 
-save('D:/CBY/exp0608/time_info.mat', 'time_map');
+save('F:/cby/exp0611/time_info.mat', 'time_map');
