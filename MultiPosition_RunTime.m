@@ -32,7 +32,7 @@ w = 2048; h = 2048;
 EXPOSURE_WAIT = EXPOSURE + 10;
 
 time_map = zeros(pos_num, t_len);
-z_map = zeros(pos_num);
+z_map = zeros(pos_num, 1);
 well = 1;
 well_map =  [1:6 12:-1:7];
 
@@ -43,10 +43,9 @@ mmc.setPosition(all_pos(3, 1)); % only run at the first time
 for i = 1:pos_num
     disp(i);
     % Set new position and set PFS
-    mmc.setXYPosition(all_pos(1,i), all_pos(2,i ));
+    mmc.setXYPosition(all_pos(1, i), all_pos(2, i ));
     %mmc.setPosition(all_pos(3, i));
-    mmc.setProperty('TIPFSOffset', 'Position', 4041/40);
-    mmc.waitForDevice('TIZDrive');
+    mmc.setProperty('TIPFSOffset', 'Position', 4034/40);
     mmc.waitForDevice('TIXYDrive');
     if mod(i, 21) == 1
         mmc.sleep(3000);
@@ -55,15 +54,19 @@ for i = 1:pos_num
         mmc.sleep(300);
     end
     % Use PFS for focus
-    mmc.setProperty('TIPFSStatus', 'State', 'On');
-    mmc.sleep(4000); %200);
-    mmc.waitForSystem();
-    mmc.setProperty('TIPFSStatus', 'State', 'Off');
+    if mod(i, 21) == 11 % TODO: image blur at well center
+        continue
+    else
+        mmc.setProperty('TIPFSStatus', 'State', 'On');
+        mmc.sleep(4000); %200);
+        mmc.waitForSystem();
+        mmc.setProperty('TIPFSStatus', 'State', 'Off');
+    end
     z_map(i) = mmc.getPosition(); % save z postion
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
     
-    fname = sprintf('F:/cby/exp0611/well%dxy%d.tiff', well, i);
+    fname = sprintf('F:/cby/exp0615/well%dxy%d.tiff', well, i);
     % Capture image time by time
     t = 1;
     while( t<=t_len )
@@ -109,4 +112,4 @@ for i = 1:pos_num
     end
 end
 
-save('F:/cby/exp0611/all_info.mat', 'time_map', 'z_map');
+save('F:/cby/exp0615/all_info.mat', 'time_map', 'z_map');
