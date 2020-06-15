@@ -1,6 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Capture mulitpositions
 % HF 20200601 low exposure change, add counte to break dead loop
+% 20200615 skip well center point
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if exist('mmc', 'var')
@@ -54,9 +55,7 @@ for i = 1:pos_num
         mmc.sleep(300);
     end
     % Use PFS for focus
-    if mod(i, 21) == 11 % TODO: image blur at well center
-        continue
-    else
+    if mod(i, 21) ~= 11 % TODO: image blur at well center
         mmc.setProperty('TIPFSStatus', 'State', 'On');
         mmc.sleep(4000); %200);
         mmc.waitForSystem();
