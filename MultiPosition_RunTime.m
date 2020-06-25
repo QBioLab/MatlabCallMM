@@ -1,23 +1,3 @@
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
-%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Capture mulitpositions
 % HF 20200601 low exposure change, add counte to break dead loop

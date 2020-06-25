@@ -6,8 +6,8 @@
 % | 20200624| Add multi color support
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-data_dir = 'F:/cby/exp0624';
-PFS = 4036;
+data_dir = 'F:/llj/exp0625';
+PFS = 4717;
 
 if exist('mmc', 'var')
     warning("Don't initialize MMCore again!");
@@ -20,40 +20,40 @@ mmc.setProperty('TIXYDrive', 'SpeedX', 2);
 mmc.setProperty('TIXYDrive', 'SpeedY', 2);
 %mmc.setProperry('TILightPath', 'Label', '3-Right100')
 mmc.setProperty('TILightPath', 'State', '2'); % Use right camera
-mmc.setProperty('TINosePiece', 'Label', '1-Plan Apo 4x NA 0.20 Dry');
-mmc.setProperty('TIFilterBlock1', 'Label', '2-DIA'); % 2-DIA or 5-Conti
-mmc.setProperty('LudlWheel', 'State', '2'); % Ludl filter: use green emission filter
+mmc.setProperty('TINosePiece', 'Label', '2-Plan Apo 10x NA 0.45 Dry');
+mmc.setProperty('TIFilterBlock1', 'Label', '6-S-Qad');
+mmc.setProperty('LudlWheel', 'State', '0'); % don't use emission filter
 
 W = 2048; H = 2048;
 EXPOSURE = 15; %10ms
 mmc.setExposure(EXPOSURE);
 
 %all_pos = [1 2 3400 95; 10 20 3500 95];  % [x y z pfs_offset]
-all_pos_full = importdata("U24-4XAPO-EB-control-12wells-0525.csv");
-well_map =  [1:6 12:-1:7];
-all_pos = all_pos_full((9-1)*21+1:10*21);
+all_pos = importdata("U24-4XAPO-EB-control-12wells-0525for10x.csv");
+well=0;
+well_map =  [9 15];
 pos_num = length(all_pos(1, :));
 time_map = zeros(pos_num, 1);
 z_map = zeros(pos_num, 1);
 
-channel_name = ['BF', 'Teal', 'Green'];
-channel_exposure = [ 15 200 200];
-channel_level= [ 10 10 10];
+channel_name = ["BF", "Violet", "Cyan", "Green"];
+channel_exposure = [ 15 200 200 200 ];
+channel_level= [ 10 40 40 40];
 channel_num = length(channel_exposure);
 for ch = 1:channel_num % set channel intensity
-    intensity = channel_level(ch)
-    if channel == 1 %BF
-        mmc.setProperty('BFLED', 'Intensity', intensity);
-        mmc.setProperty('BFLED', 'State', 1);
+    intensity = channel_level(ch);
+    if ch == 1 %BF
+        %mmc.setProperty('BFLED', 'Intensity', intensity);
+        mmc.setProperty('Arduino-Switch', 'State', 16);
     else
-        mmc.setProperty('Lumencor', [channel_name '_Level'], intensity);
+        mmc.setProperty('Lumencor', strcat(channel_name(ch), "_Level"), intensity);
+    end
 end
-
 
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 mmc.setPosition(all_pos(3, 1)); % only run at the first time
 
-for i = 1:pos_num
+for i = 107:pos_num
     disp(i);
     % Set new position and set PFS
     mmc.setXYPosition(all_pos(1, i), all_pos(2, i ));
@@ -78,33 +78,41 @@ for i = 1:pos_num
     
     fname = sprintf('%s/well%dxy%d.tiff', data_dir, well, i);
     % Capture image time by time
-    for channel in 1:channel_num
-         % Update light source
-         EXPOSURE = channel_exposure( channel );
-         % Update exposure for difference light source
-         if channel == 1 %bf
-             mmc.setProperty('BFLED', 'State', 1);
-         else % enable excited light
-             mmc.setProperty('Lumencor', [channel_name '_Enable'], 1);
-         end
-         mmc.setExposure( EXPOSURE );
-         time_map(i) = now;
-         mmc.snapImage();
-         mmc.sleep(EXPOSURE + 10); % wait for exposure
-         img = uint16( reshape(mmc.getImage(), W, H) );
-         if channel == 1 % Write first page 
-             mmc.setProperty('BFLED', 'State', 0);
-             options.overwrite = true;
-             options.append = false;
-             options.message = false;
-             saveastiff(img, fname, options);
-         else % Append to tiff
-             mmc.setProperty('Lumencor', [channel_name '_Enable'], 0);
-             options.overwrite = false;
-             options.append = true;
-             options.message = false;
-             saveastiff(img, fname, options);
-         end
+    for channel = 1:channel_num
+        %mmc.sleep(1000);
+        % Update light source
+        EXPOSURE = channel_exposure( channel );
+        name = channel_name(channel);
+        % Update exposure for difference light source
+        if channel == 1 %bf
+            mmc.setProperty('Arduino-Shutter', 'OnOff', 1);
+        else % enable excited light
+            if channel == 4 %YG filter
+                mmc.setProperty('Lumencor', 'YG_Filter', 1);
+            end
+            mmc.setProperty('Lumencor', strcat(name, "_Enable"), 1);
+        end
+        mmc.setExposure( EXPOSURE );
+        time_map(i) = now;
+        mmc.snapImage();
+        mmc.sleep(EXPOSURE + 10); % wait for exposure
+        img = uint16( reshape(mmc.getImage(), W, H) );
+        if channel == 1 % Write first page
+            mmc.setProperty('Arduino-Shutter', 'OnOff', 0);
+            options.overwrite = true;
+            options.append = false;
+            options.message = false;
+            saveastiff(img, fname, options);
+        else % Append to tiff
+            mmc.setProperty('Lumencor', strcat(name, "_Enable"),  0);
+            if channel == 4 %YG filter
+                mmc.setProperty('Lumencor', 'YG_Filter', 0);
+            end
+            options.overwrite = false;
+            options.append = true;
+            options.message = false;
+            saveastiff(img, fname, options);
+        end
     end
 end
 
