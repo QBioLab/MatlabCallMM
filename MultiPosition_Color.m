@@ -4,10 +4,11 @@
 % | 20200601| low exposure change, add counte to break dead loop @HF
 % | 20200615| skip well center point @HF
 % | 20200624| Add multi color support
+% | 20200628| Rotate emission filter
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-data_dir = 'F:/llj/exp0625';
-PFS = 4717;
+data_dir = 'F:/llj/exp0628-2';
+PFS = 4728;
 
 if exist('mmc', 'var')
     warning("Don't initialize MMCore again!");
@@ -38,7 +39,7 @@ z_map = zeros(pos_num, 1);
 
 channel_name = ["BF", "Violet", "Cyan", "Green"];
 channel_exposure = [ 15 200 200 200 ];
-channel_level= [ 10 40 40 40];
+channel_level= [ 10 30 40 40];
 channel_num = length(channel_exposure);
 for ch = 1:channel_num % set channel intensity
     intensity = channel_level(ch);
@@ -53,25 +54,23 @@ end
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 mmc.setPosition(all_pos(3, 1)); % only run at the first time
 
-for i = 107:pos_num
+for i = 1:pos_num
     disp(i);
     % Set new position and set PFS
     mmc.setXYPosition(all_pos(1, i), all_pos(2, i ));
     mmc.setProperty('TIPFSOffset', 'Position', PFS/40);
     mmc.waitForDevice('TIXYDrive');
-    if mod(i, 21) == 1
+    if mod(i, 121) == 1
         mmc.sleep(3000);
         well = well +1;
     else
         mmc.sleep(300);
     end
     % Use PFS for focus
-    if mod(i, 21) ~= 11 % TODO: image blur at well center
         mmc.setProperty('TIPFSStatus', 'State', 'On');
         mmc.sleep(4000); %200);
         mmc.waitForSystem();
         mmc.setProperty('TIPFSStatus', 'State', 'Off');
-    end
     z_map(i) = mmc.getPosition(); % save z postion
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
@@ -99,12 +98,23 @@ for i = 107:pos_num
         img = uint16( reshape(mmc.getImage(), W, H) );
         if channel == 1 % Write first page
             mmc.setProperty('Arduino-Shutter', 'OnOff', 0);
+            mmc.setProperty('LudlWheel', 'State', '1'); % change to BFP
+            mmc.sleep(200); % wait for 200ms
             options.overwrite = true;
             options.append = false;
             options.message = false;
             saveastiff(img, fname, options);
         else % Append to tiff
             mmc.setProperty('Lumencor', strcat(name, "_Enable"),  0);
+            if channel == 2 % BFF
+                mmc.setProperty('LudlWheel', 'State', '2');  %change to GFP
+                mmc.sleep(200); % wait for 200ms
+            end
+            if channel == 3 % BFF
+                mmc.setProperty('LudlWheel', 'State', '0');  %change to GFP
+                mmc.sleep(200); % wait for 200ms
+            end
+
             if channel == 4 %YG filter
                 mmc.setProperty('Lumencor', 'YG_Filter', 0);
             end

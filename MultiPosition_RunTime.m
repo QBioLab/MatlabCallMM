@@ -46,7 +46,7 @@ for i = 1:pos_num
     % Set new position and set PFS
     mmc.setXYPosition(all_pos(1, i), all_pos(2, i ));
     %mmc.setPosition(all_pos(3, i));
-    mmc.setProperty('TIPFSOffset', 'Position', 4036/40);
+    mmc.setProperty('TIPFSOffset', 'Position', 4051/40);
     mmc.waitForDevice('TIXYDrive');
     if mod(i, 21) == 1
         mmc.sleep(3000);
@@ -65,7 +65,7 @@ for i = 1:pos_num
     mmc.setExposure(EXPOSURE);
     mmc.clearCircularBuffer(); % clear camera buffer
     
-    fname = sprintf('F:/cby/exp0624/well%dxy%d.tiff', well, i);
+    fname = sprintf('F:/cby/exp0628/well%dxy%d.tiff', well, i);
     % Capture image time by time
     t = 1;
     while( t<=t_len )
@@ -111,4 +111,4 @@ for i = 1:pos_num
     end
 end
 
-save('F:/cby/exp0624/all_info.mat', 'time_map', 'z_map');
+save('F:/cby/exp0628/all_info.mat', 'time_map', 'z_map');
