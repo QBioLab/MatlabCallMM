@@ -9,8 +9,8 @@
 % | 20200704| Update Well position
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-data_dir = 'F:/llj/exp0706';
-PFS = 7431;
+data_dir = 'F:/llj/exp0708_2';
+PFS = 7567;
 z_position = 4227;
 if exist('mmc', 'var')
     warning("Don't initialize MMCore again!");
@@ -42,7 +42,9 @@ mmc.setExposure(EXPOSURE);
 %all_pos = [1 2 3400 95; 10 20 3500 95];  % [x y z pfs_offset]
 %all_pos = importdata("U24-4XAPO-EB-control-12wells-0525for10x.csv");
 %all_pos = importdata("llj_24_well_2well_20x.csv");
-all_pos = importdata("LLJ_24well_20x_20200706.csv");
+%all_pos = importdata("LLJ_24well_20x_20200706.csv");
+all_pos = importdata("LLJ_24well_20x_20200708_2.csv");
+
 well=0;
 well_map =  [9 15];
 pos_num = length(all_pos(1, :));
