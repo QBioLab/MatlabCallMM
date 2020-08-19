@@ -8,7 +8,7 @@ function mmc = initialize(config)
         mmc.setTimeoutMs(50000);
         %mmc.enableDebugLog(true);
         %mmc.setPrimaryLogFile('test.log');
-        mmc.setProperty('Andor sCMOS Camera', 'Sensitivity/DynamicRange', '16-bit (low noise & high well capacity)'); 
+        %mmc.setProperty('Andor sCMOS Camera', 'Sensitivity/DynamicRange', '16-bit (low noise & high well capacity)'); 
         % Set to 16bit
-        mmc.getProperty('Andor sCMOS Camera', 'AuxiliaryOutSource (TTL I/O)');
+        %mmc.getProperty('Andor sCMOS Camera', 'AuxiliaryOutSource (TTL I/O)');
 end
