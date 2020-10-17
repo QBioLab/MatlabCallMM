@@ -5,17 +5,20 @@
 % 20200805 WaitForSystem Work! @HF
 % 20200818 accelerate speed @HF
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-data_dir = 'D:/CBY/exp0921-1';
+data_dir = 'F:/CBY3/exp1015';
 EXPOSURE = 15; %15ms
 PFS = 3900;
-all_pos = importdata("U24-4XAPO-EB-control-24wells-16perwell_0819.csv");
+%all_pos = importdata("U24-4XAPO-EB-control-24wells-16perwell_0819.csv");
+all_pos = importdata("U24-DS-QI2_4XAPO-EB-control-24wells-14perwell_1015.csv");
 
 if exist('mmc', 'var')
     warning("Don't initialize MMCore again!");
 else
-    mmc = initialize('C:\Users\qblab\Documents\MMConfig_Ti_Color_Hamamatsu.cfg');
+    mmc = initialize('C:\Users\qblab\Documents\MMConfig_Ti_DS-Qi2.cfg');
 end
-mmc.setProperty('HamamatsuHam_DCAM', 'ScanMode', 2);
+%mmc.setProperty('HamamatsuHam_DCAM', 'ScanMode', 2);
+cam_ser = serial('COM11', 'BaudRate',57600);
+fopen(cam_ser);
 mmc.setProperty('TIXYDrive', 'SpeedX', 2);
 mmc.setProperty('TIXYDrive', 'SpeedY', 2);
 %mmc.setProperry('TILightPath', 'Label', '3-Right100')
@@ -34,8 +37,8 @@ mmc.initializeCircularBuffer;
 pos_num = length(all_pos(1, :));
 t_len = 150; % 150 frame
 t_gap = 200; %200ms
-w = 2304; h = 2304;
-%w = 2048; h = 2048;
+%w = 2304; h = 2304;
+w = 2048; h = 2048; % for DS-Qi2
 
 time_map = zeros(pos_num, 1);
 z_map = zeros(pos_num, 1);
@@ -64,48 +67,21 @@ for i = 1:pos_num
 
     % capture first image and find right exposure 
     t_last = clock;  % clock in second
-	mmc.snapImage();
-	img = uint16(reshape(mmc.getImage(), w, h));
-	time_map(i) = now;
-	EXPOSURE_TMP = EXPOSURE;
-    try_num = 0;
-    % Auto exposure to avoid over exposure
-    while ( min(img(:)) ==0 && try_num <10)
-        EXPOSURE_TMP = EXPOSURE_TMP*0.8;
-		mmc.setExposure(EXPOSURE_TMP);
-        mmc.snapImage();
-        disp( mmc.getExposure())
-        img = uint16(reshape(mmc.getImage(), w, h));
-        t_last = clock;  % clock in second
-        try_num = try_num +1;
-    end
-    % Write 1st page in tiff
-    options.overwrite = true;
-    options.append = false;
-    options.message = false;
-    saveastiff(img, fname, options);
-     % update options to append image to tiff
-    options.overwrite = false;
-    options.append = true;
-    options.message = false;
     
     while (clock - t_last < t_gap/1000)
         mmc.sleep(1); 
     end
     % continue acquire 
-    mmc.startSequenceAcquisition( t_len-1, 0, true );
-    while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) 
-        t_last = clock;
-        if mmc.getRemainingImageCount() > 0 
-            img= uint16(reshape(mmc.popNextImage(), w, h));
-            saveastiff(img, fname, options);
-        else 
-            mmc.sleep(min(.5 * EXPOSURE, 20)); 
+   while( t<=t_len )
+        t_last = clock;  % clock in second
+		fprintf(cam_ser, '1');
+        mmc.sleep(EXPOSURE_WAIT); % wait for exposure
+        time_map(i, t) = now;
+        t = t + 1; % Update timer
+        % Wait for next cycle
+        while (clock - t_last < t_gap/1000)
+            mmc.sleep(1); 
         end
-        while(clock - t_last < t_gap/1000)
-            mmc.sleep(1);
-         end
     end
-    mmc.stopSequenceAcquisition();
 end
 save([data_dir '/all_info.mat'], 'time_map', 'z_map');

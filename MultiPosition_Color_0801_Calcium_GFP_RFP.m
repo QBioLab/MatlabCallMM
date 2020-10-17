@@ -169,7 +169,7 @@ for i0=1:16
                             options.append = true;
                             options.message = false;
                 end
-                         saveastiff(img, fname, options);
+                saveastiff(img, fname, options);
             end
             mmc.setProperty('Lumencor', strcat(name, "_Enable"),  0);
             % Move emission filter to next channel

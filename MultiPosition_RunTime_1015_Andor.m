@@ -5,21 +5,21 @@
 % 20200805 WaitForSystem Work! @HF
 % 20200818 accelerate speed @HF
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-data_dir = 'D:/CBY/exp0921-1';
+data_dir = 'D:\cby\exp1016-1';
 EXPOSURE = 15; %15ms
-PFS = 3900;
-all_pos = importdata("U24-4XAPO-EB-control-24wells-16perwell_0819.csv");
+PFS = 100.32*40;
+all_pos = importdata("U24-Zyla55_4XAPO-EB-control-24wells-14perwell_1015.csv");
 
 if exist('mmc', 'var')
     warning("Don't initialize MMCore again!");
 else
-    mmc = initialize('C:\Users\qblab\Documents\MMConfig_Ti_Color_Hamamatsu.cfg');
+    mmc = initialize('C:\Users\qblab\Documents\MMConfig_Ti_Andor_NoCooling.cfg');
 end
-mmc.setProperty('HamamatsuHam_DCAM', 'ScanMode', 2);
+%mmc.setProperty('HamamatsuHam_DCAM', 'ScanMode', 2);
 mmc.setProperty('TIXYDrive', 'SpeedX', 2);
 mmc.setProperty('TIXYDrive', 'SpeedY', 2);
-%mmc.setProperry('TILightPath', 'Label', '3-Right100')
-mmc.setProperty('TILightPath', 'State', '2'); % Use right camera
+%mmc.setProperry('TILightPath', 'Label', '2-Lef100')
+mmc.setProperty('TILightPath', 'State', '1'); % Use left camera
 mmc.setProperty('TINosePiece', 'Label', '1-Plan Apo 4x NA 0.20 Dry');
 %mmc.setProperty('TINosePiece', 'State', '0');% Choose 4X objective
 mmc.setProperty('TIFilterBlock1', 'Label', '2-DIA'); % use DIA filter block
@@ -32,9 +32,10 @@ mmc.initializeCircularBuffer;
 
 %all_pos = [1 2 3400 95; 10 20 3500 95];  % [x y z pfs_offset]
 pos_num = length(all_pos(1, :));
+pos_per_well = 14;
 t_len = 150; % 150 frame
 t_gap = 200; %200ms
-w = 2304; h = 2304;
+w = 2560; h = 2160;
 %w = 2048; h = 2048;
 
 time_map = zeros(pos_num, 1);
@@ -46,12 +47,16 @@ well_map =  [1:6 12:-1:7 13:18 24:-1:19];
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 mmc.setPosition(all_pos(3, 1)); % only run at the first time
 mmc.setProperty('TIPFSOffset', 'Position', PFS/40);
-for i = 1:pos_num
+%mmc.sleep(1800000); % wait camera to remove frog
+
+for i =  1:pos_num
     disp(i);
     mmc.setXYPosition(all_pos(1, i), all_pos(2, i ));    % Set new position
     mmc.waitForSystem; % wait stage move to new position
-    if mod(i, 16) == 1
-        well = well +1;
+    mmc.sleep(700);
+    if mod(i, pos_per_well) == 1
+        %well = well +1;
+        well = ceil(i/pos_per_well);
         % Use PFS for focus
         mmc.setProperty('TIPFSStatus', 'State', 'On');
         mmc.waitForSystem();
