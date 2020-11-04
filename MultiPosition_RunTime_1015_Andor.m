@@ -5,9 +5,10 @@
 % 20200805 WaitForSystem Work! @HF
 % 20200818 accelerate speed @HF
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-data_dir = 'D:\cby\exp1016-1';
+data_dir = 'F:\cby\exp1021-1'; %media II&III
+%data_dir = 'D:\CBY\exp1021'; %media I
 EXPOSURE = 15; %15ms
-PFS = 100.32*40;
+PFS =100.075*40;
 all_pos = importdata("U24-Zyla55_4XAPO-EB-control-24wells-14perwell_1015.csv");
 
 if exist('mmc', 'var')
@@ -54,9 +55,10 @@ for i =  1:pos_num
     mmc.setXYPosition(all_pos(1, i), all_pos(2, i ));    % Set new position
     mmc.waitForSystem; % wait stage move to new position
     mmc.sleep(700);
+    well = ceil(i/pos_per_well);
     if mod(i, pos_per_well) == 1
         %well = well +1;
-        well = ceil(i/pos_per_well);
+        %well = ceil(i/pos_per_well);
         % Use PFS for focus
         mmc.setProperty('TIPFSStatus', 'State', 'On');
         mmc.waitForSystem();
