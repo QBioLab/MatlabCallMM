@@ -9,7 +9,7 @@
 % | 20201104| For organoid @HF
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-data_dir = 'F:\td\20201104';
+data_dir = 'F:\td\20201105';
 PFS = 4000/40;
 
 if exist('mmc', 'var')
@@ -36,12 +36,14 @@ EXPOSURE = 10; %10ms
 mmc.setExposure(EXPOSURE);
 
 % EXPERIMENT PARAMETERS
-all_pos = importdata("Tandeng_organoid_1103_96well.csv");
+%all_pos = importdata("Tandeng_organoid_1103_96well.csv");
+all_pos = importdata("Tandeng_organoid_1103_96well_1105.csv");
+
 well_map =  [1 2 3 4 5 6 7 8];
 pos_num = length(all_pos(:, 1));
 pos_per_well = 4;
 time_map = zeros(pos_num, 1);
-z_gap = - 10; % 10um
+z_gap = - 15; % 10um
 z_len = 20;
 z_map = zeros(pos_num, 1);
 
@@ -61,7 +63,7 @@ end
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 %mmc.setPosition(all_pos(1, 3)); % only run at the first time to set zpos
 
-for i =22: pos_num
+for i =1: pos_num
      %[i 0 mmc.getPosition()]
     disp(i);
     % Set new position and set PFS
