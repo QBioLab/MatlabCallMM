@@ -5,8 +5,8 @@
 % 20200805 WaitForSystem Work! @HF
 % 20200818 accelerate speed @HF
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-data_dir = 'F:\cby\exp1021-1'; %media II&III
-%data_dir = 'D:\CBY\exp1021'; %media I
+data_dir = 'D:\CBY\exp1109-3.5'; %media II&III day3.5
+%data_dir = 'F:\cby\exp1109-4.5'; %media II&III day4.5
 EXPOSURE = 15; %15ms
 PFS =100.075*40;
 all_pos = importdata("U24-Zyla55_4XAPO-EB-control-24wells-14perwell_1015.csv");
