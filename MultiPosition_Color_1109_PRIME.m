@@ -48,8 +48,8 @@ z_len = 20;
 z_map = zeros(pos_num, 1);
 
 chsetting(1).name='BF';    chsetting(1).exposure=8;      chsetting(1).level=5;  chsetting(1).em=3;
-chsetting(2).name='Green'; chsetting(2).exposure=1000;;   chsetting(2).level=100;chsetting(2).em=3;
-chsetting(3).name='Cyan';  chsetting(3).exposure=1000;;   chsetting(3).level=25; chsetting(3).em=2;
+chsetting(2).name='Green'; chsetting(2).exposure=1000;   chsetting(2).level=100;chsetting(2).em=3;
+chsetting(3).name='Cyan';  chsetting(3).exposure=1000;   chsetting(3).level=25; chsetting(3).em=2;
 
 %channel_name = ['BF' , 'Cyan','Green', ]; % Bright field, GFP, mCherry 
 %em_filter = ['BF' , 'Cyan','Green', ]; % Bright field, GFP, mCherry 
@@ -99,7 +99,7 @@ for i =1: pos_num
                 mmc.setProperty('Arduino-Shutter', 'OnOff', 1);
             else % enable excited light
                 if chsetting(ch).name(1:2) == 'Gr' %YG filter
-                    mmc.setProperty('Lumencor', 'YG_Filter', 1);
+                    mmc.setProperty('Spectra', 'YG_Filter', 1);
                 end
                 mmc.setProperty('Spectra', strcat(name, '_Enable'), 1);
             end
@@ -117,11 +117,11 @@ for i =1: pos_num
                 mmc.setProperty('Arduino-Shutter', 'OnOff', 0);
             else
                 % close excited light shutter
-                mmc.setProperty('LudlWheel', 'State', channel_rolling(ch)) ; 
-                % change to next em filter
                 mmc.setProperty('Spectra', strcat(name, '_Enable'),  0);
+                mmc.setProperty('LudlWheel', 'State', chsetting(channel_rolling(ch)).em ); 
+                % change to next em filter
                 if chsetting(ch).name(1:2) == 'Gr' %YG filter
-                    mmc.setProperty('Lumencor', 'YG_Filter', 0);
+                    mmc.setProperty('Spectra', 'YG_Filter', 0);
                 end
             end
         end
