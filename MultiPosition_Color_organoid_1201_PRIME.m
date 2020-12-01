@@ -4,14 +4,15 @@
 % | 20200601| low exposure change, add counte to break dead loop @HF
 % | 20200615| skip well center point @HF
 % | 20200624| Add multi color support
-% | 20200628| Rotate emission filter
+% | 20200628| Rotate emis0sion filter
 % | 20200730| For Autophagy project @ZY @HF
 % | 20201104| For organoid @HF
 % | 20201109| add GFP channel, update information struture
+% | 20201201| remove exposure waiting
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 0-5: 
 
-data_dir = 'F:\td\20201109';
+data_dir = 'd:\td\20201201';
 PFS = 4000/40;
 
 if exist('mmc', 'var')
@@ -38,27 +39,23 @@ EXPOSURE = 10; %10ms
 mmc.setExposure(EXPOSURE);
 
 % EXPERIMENT PARAMETERS
-all_pos = importdata('Tandeng_organoid_1109_96well.csv');
+all_pos = importdata('Tandeng_organoid_1201_96well.csv');
 % 20201109 6PM, stage is knocked at y by -1400um, x is OK
-all_pos(:,2)=all_pos(:,2)-1400;%
-well_map =  [1 2 3 4 5 6 7 8];
+all_pos(:,2)=all_pos(:,2);%
+well_map =  [1 2 3 4 5 6];
 pos_num = length(all_pos(:, 1));
 pos_per_well = 4;
 time_map = zeros(pos_num, 1);
-z_gap = - 20; % 20um
-z_len = 20;
+z_gap = - 30; % 20um
+z_len =24 ;
 z_map = zeros(pos_num, 1);
 
 chsetting(1).name='BF';    chsetting(1).exposure=8;      chsetting(1).level=5;  chsetting(1).em=3;
-% chsetting(2).name='Green'; chsetting(2).exposure=1000;   chsetting(2).level=100;chsetting(2).em=3;
-% chsetting(3).name='Cyan';  chsetting(3).exposure=1000;   chsetting(3).level=25; chsetting(3).em=2;
+chsetting(2).name='Green'; chsetting(2).exposure=1000;   chsetting(2).level=100;chsetting(2).em=3;
+chsetting(3).name='Cyan';  chsetting(3).exposure=1000;   chsetting(3).level=25; chsetting(3).em=2;
 
-%channel_name = ['BF' , 'Cyan','Green', ]; % Bright field, GFP, mCherry 
-%em_filter = ['BF' , 'Cyan','Green', ]; % Bright field, GFP, mCherry 
-%channel_exposure = [ 8 1000 1000]; %ms
-%channel_level= [5 100 50]; % intensity percent
 channel_num = length(chsetting);
-channel_rolling = [2:channel_num 1];
+channel_rolling = [2:channel_num 1]; % don't change it
 for ch = 1:channel_num % set excitation light intensity for each channel
     if chsetting(ch).name(1:2) == 'BF'
         mmc.setProperty('Arduino-Switch', 'State', 16);
@@ -71,7 +68,7 @@ end
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 %mmc.setPosition(all_pos(1, 3)); % only run at the first time to set zpos
 
-for i =1: pos_num
+for i =16: pos_num
      %[i 0 mmc.getPosition()]
     disp(i);
     % Set new position and set PFS
@@ -112,7 +109,7 @@ for i =1: pos_num
             %mmc.waitForSystem();
             mmc.sleep(500);
             mmc.snapImage();
-            mmc.sleep(EXPOSURE + 10); % wait for exposure
+            %mmc.sleep(EXPOSURE + 10); % wait for exposure
             img(:, :, z, ch) = uint16( reshape(mmc.getImage(), W, H) );
             
             if chsetting(ch).name(1:2) == 'BF' % close bright field light
