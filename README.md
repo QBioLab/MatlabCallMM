@@ -1,4 +1,4 @@
-# Matlab Call Micro-Manager
+# Matlab Call Micro-Manager for Spinning Disk Confocal Microscope
 
 
 ## Setting Matlab and Micro-Manager
