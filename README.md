@@ -1,6 +1,7 @@
 # Matlab Call Micro-Manager for Spinning Disk Confocal Microscope
 
 
+
 ## Setting Matlab and Micro-Manager
 We almost follow [Micro-Manager wiki](https://micro-manager.org/wiki/Matlab_Configuration).
 
@@ -39,3 +40,7 @@ to Micro-Manager installation directory, Andor driver could be loaded normally.
 For permanent setting, you should check step 4.
 
 ##  Experiment work flow
+
+
+## Reference
+1. https://valelab4.ucsf.edu/~MM/doc-2.0.0-gamma/mmcorej/mmcorej/CMMCore.html

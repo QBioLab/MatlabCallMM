@@ -31,20 +31,24 @@ mmc.setProperty('AndorLaserCombiner', 'LaserPort', 'A');
 for t=1:TP
     for pos=1:POS_NUM
         % move to next target point
+        % TODO: Generate grid of cell or Before experiment
+        % TODO: USE FPS find the bottom of cell
         x= 1; y= 2; z = 3;
         mmc.setXYPosition(x, y);
         mmc.setPosition(z);
         mmc.waitForSystem();
         % begin continue acquitistion
-        mmc.startSequenceAcquisition(Z_NUM, 0, true);
+        mmc.startSequenceAcquisition(Z_NUM, 0, false);
         img = zeros(W, H, Z_NUM, 'uint16');
         slice = 1;
         while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice()))
             if mmc.getRemainingImageCount() > 0
+                %TODO: use arduino as wave generator to trigger camera
                 img(:, :, slice)= uint16(reshape(mmc.popNextImage(), W, H));
                 slice = slice+1;
                 mmc.setRelativePosition('PiezoStage', Z_GAP);
-                %TODO: find waitting time
+                mmc.sleep(7); % wait 3ms for piezostage stable
+                %TODO: find eough time for waitting
             else
                 mmc.sleep(min(.5 * EXPOSURE, 20))
             end
