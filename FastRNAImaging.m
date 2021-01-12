@@ -1,11 +1,11 @@
 % Fast 3D imaging for C. elegans Neurons 
 % HF 20210109
 
-  if exist('mmc', 'var')
-        warning("Don't initialize MMCore again!");
-  else
+if exist('mmc', 'var')
+    warning("Don't initialize MMCore again!");
+else
     mmc = initialize('config\spinningdisk.cfg');
-  end
+end
 
 % EXPERIMENT PARAMETERS %
 dataDir=''

@@ -1,7 +1,5 @@
 # Matlab Call Micro-Manager for Spinning Disk Confocal Microscope
 
-
-
 ## Setting Matlab and Micro-Manager
 We almost follow [Micro-Manager wiki](https://micro-manager.org/wiki/Matlab_Configuration).
 
