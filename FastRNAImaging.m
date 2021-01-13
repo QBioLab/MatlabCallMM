@@ -1,19 +1,19 @@
 % Fast 3D imaging for C. elegans Neurons 
-% HF 20210109
+% HF 20210113
 
 if exist('mmc', 'var')
     warning("Don't initialize MMCore again!");
 else
-    mmc = initialize('config\spinningdisk.cfg');
+    mmc = initialize('config\spinningdisk_andor.cfg');
 end
 
 % EXPERIMENT PARAMETERS %
-dataDir=''
+dataDir='../test';
 W = 512; 
 H = 512; % camera ROI
-EXPOSURE = 100; % camera exposure time in ms
-TP = 200; % total time points
-POS_NUM = 40; % total position number
+EXPOSURE = 150; % camera exposure time in ms
+TP = 3; % total time points
+POS_NUM = 100; % total position number
 Z_NUM = 20; % total z slice number
 Z_GAP = 2; % z gap in um
 
@@ -21,19 +21,23 @@ Z_GAP = 2; % z gap in um
 mmc.setExposure(EXPOSURE);
 mmc.setProperty('TILightPath', 'Label', '2-Left100');
 mmc.setProperty('AndorLaserCombiner', 'DOUT', '0xfc');
+mmc.setPosition('PiezoStage', 5); % park to home position
 % open and set laser, 0-10 
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '5');
+mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 mmc.setProperty('CSUX-Dichroic Mirror', 'State', '0');
 mmc.setProperty('CSUX-Shutter', 'State', 'Open');
-mmc.setProperty('Wheel-A', 'Label', 'Filter-0'); %emission filter
+mmc.setProperty('Wheel-A', 'Label', 'Filter-6'); %red emission filter
 mmc.setProperty('AndorLaserCombiner', 'LaserPort', 'A');
 
+% AUTO GENERATE FOCUSED MAP 
+[map, map_imgs] = buildmap(POS_NUM, mmc);
+
+% XYZT TIMELAPSE
 for t=1:TP
     for pos=1:POS_NUM
         % move to next target point
-        % TODO: Generate grid of cell or Before experiment
-        % TODO: USE FPS find the bottom of cell
-        x= 1; y= 2; z = 3;
+        disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
+        x= map(1, pos); y= map(2, pos); z = map(3, pos);
         mmc.setXYPosition(x, y);
         mmc.setPosition(z);
         mmc.waitForSystem();
@@ -54,7 +58,7 @@ for t=1:TP
             end
         end
         mmc.stopSequenceAcquisition();
-        mmc.setPosition('PiezoStage', 0); % park to home position
+        mmc.setPosition('PiezoStage', 5); % park to home position
         fname = sprintf('%spos%dt%d.tiff', dataDir, pos, t);
         saveastiff(img, fname);
     end

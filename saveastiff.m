@@ -73,7 +73,7 @@ try
 if nargin < 3 % Use default options
     options.color = false;
     options.compress = 'no';
-    options.message = true;
+    options.message = false;
     options.append = false;
     options.overwrite = false;
 end

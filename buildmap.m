@@ -1,71 +1,86 @@
-function map = buildmap(NP)
-% find xyz position hf 20210112
+function [map, map_imgs] = buildmap(NP, mmc)
+% find xyz position
 % NOTE: start point should close to dish center; only acess n*n
 % Method 1: full-auto
 % Method 2: half-auto
 % auto move to next points by dxdy, then confirm by user
-%
-%
+% Usage: 
+% Version Commit 
+% 0.1     1st, hf, 20210113
 
-map = zeros(3, NP); % absolute stage position in micron
+% absolute stage position in micron
 dx = 2100*6.5/60; % gap between x-axis in micron
 dy = 1500*6.5/60; % gap between y-axis in micron
 dz = 0.2; % gap between z-axis in micron
 % square spiral
-spiral = zeros(2, NP); %(x, y)
+spiral = zeros(3, NP); %(x, y, z)
 width = sqrt(NP);
 p_i  = 1; % point index
-sp = spiral(:, p_i); % start point
 % define move action
 left = [-1; 0]; right = [1; 0];
 down= [0; -1]; up = [0; 1];
 for i = 1:width % total loop
     % 0st movement=1, down, \|/
     p_i = p_i + 1;
-    spiral(:, p_i) = spiral(:, p_i-1) + down;
+    spiral(1:2, p_i) = spiral(1:2, p_i-1) + down;
     % 1nd movement=2i-1, right, ->
     for p = 1:2*i-1 
         p_i = p_i + 1;
-        spiral(:, p_i) = spiral(:, p_i-1) + right;
+        spiral(1:2, p_i) = spiral(1:2, p_i-1) + right;
     end 
     % 2rd movement=2i, up, /|\
     for p = 1:2*i
         p_i = p_i + 1;
-        spiral(:, p_i) = spiral(:, p_i-1) + up;
+        spiral(1:2, p_i) = spiral(1:2, p_i-1) + up;
     end
     % 3rd movement=2i, left, <-
     for p = 1:2*i
         p_i = p_i + 1;
-        spiral(:, p_i) = spiral(:, p_i-1) + left;
+        spiral(1:2, p_i) = spiral(1:2, p_i-1) + left;
     end
     % 4rd movement=2i, down, \|/
     for p = 1:2*i
         p_i = p_i + 1;
-        spiral(:, p_i) = spiral(:, p_i-1) + down;
+        spiral(1:2, p_i) = spiral(1:2, p_i-1) + down;
     end
 end
 
 % MOVE STAGE AND FIND FOCUS
-disp("Please move stage close to dish centre, at focus");
+disp("Please move stage close to dish centre, tone PFS focus");
 disp("Get orign from current stage position");
-orign_xy = mmc.getXYPosition();
+pfs = mmc.getProperty('TIPFSOffset', 'Position');
+disp("Current PFS Offset: ");
+disp( pfs);
+orign_x = mmc.getXPosition();
+orign_y = mmc.getYPosition();
 orign_z = mmc.getPosition();
-map = spiral * [dx; dy; dz] + [orign_xy(1); orign_xy(2); orign_z];
+map = spiral .* [dx; dy; dz] + [orign_x; orign_y; orign_z];
 % park piezeo stage close to 0
 mmc.setPosition('PiezoStage', 7);
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 W = 512; H = 512; % camera pixel 
 map_imgs = zeros(W, H, NP, 'uint16'); % Save camera image
+% search focus for each point
 for p = 1:NP
-    disp('Moving and focus to point ', p);
-    x, y = map(1:2, p);
+    disp(['Moving and focusing to point ', num2str(p)]);
+    x = map(1, p); y = map(2, p);
+    %TODO: add auto focus fail handler
     mmc.setXYPosition(x, y);
-    mmc.setProperty('TIPFSStatus', 'State', 'On');
-    mmc.sleep(100); % wait 100ms
+    mmc.sleep(13);
     mmc.waitForSystem();
+    mmc.setProperty('TIPFSStatus', 'State', 'On');
+    % wait PFS is on 'LOCKED'
+    pfs_on = false; lock = false;
+    while ~( pfs_on && lock)
+        mmc.sleep(7); % wait 100ms
+        pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+        lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
+    end
+    % update TI-FOCUS's z poition in map 
+    map(3, p) = mmc.getPosition();
+    mmc.setProperty('TIPFSStatus', 'State', 'Off');
     mmc.snapImage()
     map_imgs(:, :, p) = uint16(reshape(mmc.getImage(), W, H));
-    mmc.setProperty('TIPFSStatus', 'State', 'Off');
 end
 
 end
