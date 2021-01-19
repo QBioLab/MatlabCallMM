@@ -1,59 +1,65 @@
 % Fast 3D imaging for C. elegans Neurons 
-% HF 20210113
+% HF 20210118
 
-if exist('mmc', 'var')
-     warning("Don't initialize MMCore again!");
-else
-     mmc = initialize('config\spinningdisk_hamamatsu.cfg');    
- end
-% 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210117/';
-W = 1900; 
-H = 1300; % camera ROI
-EXPOSURE = 250; % camera exposure time in ms
+dataDir='H:/20210119';
+W = 1900; H = 1300; % camera pixel size
+EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
-POS_NUM = 81; % total position number
-Z_NUM = 17; % total z slice number
+POS_NUM = 75; % total position number
+Z_NUM = 18; % total z slice number
 Z_GAP = -0.5; % z gap in um
-% 
-% EXPERIMENT INFORMATION %
-pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
-info = zeros(3, POS_NUM, TP);
-% 
-% HARDWARD INITIAL VALUE %
+
+% HARDWARD INITIALIZATION
+% load all device under micromanager
+if ~exist('mmc', 'var')
+    mmc = initialize('config\spinningdisk_hamamatsu.cfg');    
+end
 mmc.setExposure(EXPOSURE);
-mmc.setProperty('TILightPath', 'Label', '2-Left100');
-mmc.setProperty('AndorLaserCombiner', 'DOUT', '0xfc');
-mmc.setPosition('PiezoStage', 50); % park to home position
-mmc.setProperty('TIDiaLamp', 'State', 0); % close lamp
-mmc.setProperty('TIDiaLamp', 'Intensity', 17);
-% set camera ROI fit to scan header
-mmc.setROI(16, 628, 1900, 1300);
-%set I/O function
-% set to external tiggger
-mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER SOURCE', 'EXTERNAL');
-mmc.setProperty('HamamatsuHam_DCAM', 'OUTPUT TRIGGER KIND[0]', 'EXPOSURE');
-mmc.setProperty('HamamatsuHam_DCAM', 'OUTPUT TRIGGER POLARITY[0]', 'POSITIVE');
-%set to global reset
-mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER GLOBAL EXPOSURE', 'GLOBAL RESET');
-%set trigger be positive polarity
-mmc.setProperty('HamamatsuHam_DCAM', 'TriggerPolarity', 'NEGATIVE');
-mmc.setProperty('HamamatsuHam_DCAM', 'ScanMode', 1);
-% open and set laser, 0-10 
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
-mmc.setProperty('CSUX-Dichroic Mirror', 'State', '0');
-mmc.setProperty('CSUX-Shutter', 'State', 'Open');
-mmc.setProperty('Wheel-A', 'Label', 'Filter-6'); %red emission filter
-mmc.setProperty('AndorLaserCombiner', 'LaserPort', 'A');
-% set arduino trigger
-trigger = serialport('COM31', 57600);
-write(trigger, 0, 'string');
+% set arduino as camera external trigger
+if ~exist('trigger', 'var')
+    trigger = serialport('COM31', 57600);
+    write(trigger, '0', 'string');
+end
 
 % AUTO GENERATE FOCUSED MAP 
-[map, map_imgs] = buildmap(POS_NUM, mmc);
+if ~exist('map', 'var')
+    [map, map_imgs] = buildmap(POS_NUM, mmc);
+end
+% park to home
+mmc.setXYPosition(map(1, 1), map(2,1));
+
+% CAPTURE DARK FRAME
+if ~exist('df', 'var')
+    disp("Capturing dark frame")
+    df = capturedarkframe(mmc, trigger);
+    dfname = sprintf('%s/darkfield.tiff', dataDir);
+    saveastiff(df, dfname);
+    disp("Save dark frame done");
+end
+if ~exist('bf', 'var')
+    disp("Capturing bias frame")
+    bf = capturebiasframe(mmc, trigger);
+    dfname = sprintf('%s/biasfield.tiff', dataDir);
+    saveastiff(bf, dfname);
+    disp("Save bias frame done");
+end
+
+% OPEN LAMP FOR LIGHTON
+mmc.setProperty('TIDiaLamp', 'Intensity', 17);
 mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
-%  
+mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
+
+% EXPERIMENT INFORMATION %
+pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
+info = zeros(4, POS_NUM, TP); % x,y,z,stage
+
+% Load laser power sequence
+load('dynamic_excitation.mat', 'laser_dynamics')
+% set laser to zeros for test
+%mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
+mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
+
 tic
 %XYZT TIMELAPSE
 for t=1:TP
@@ -61,38 +67,35 @@ for t=1:TP
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
         x= map(1, pos); y= map(2, pos); z = map(3, pos);
-        % catch stage offline error
-        try 
-            mmc.setXYPosition(x, y);
-            mmc.setPosition(z);
-        catch 
-            mmc.sleep(100);
-            mmc.setXYPosition(x, y);
-            mmc.setPosition(z);
-        end
         x_now = mmc.getXPosition();
         timeout = 2;
-        % avoid stage fail to move 
-        while(timeout>0 && (x_now - x)> 10 )
+        mmc.waitForSystem() % maybe not necceesary
+        % check stage's posotion
+        while(timeout>0 && (x_now - x)>10 )
+            info(4, pos, t) = info(4, pos, t) + 1;
+            disp("correcting stage");
             try 
                 mmc.setXYPosition(x, y);
             catch
-                mmc.sleep(100);
+                mmc.sleep(20);
                 mmc.setXYPosition(x, y);
             end
-            mmc.sleep(100); 
+            mmc.sleep(30); 
             x_now = mmc.getXPosition();
             timeout = timeout - 1; % try 2 times
         end
+        mmc.setPosition(z);
         
         % Open PFS at each hour
         if mod(t, 10)== 0
             mmc.setProperty('TIPFSStatus', 'State', 'On');
-            % wait PFS is on 'LOCKED'
-            pfs_on = false; lock = false; timeout = 10;
+            % wait util PFS is on 'LOCKED'
+            pfs_on = false; lock = false; timeout = 7;
             while ~( pfs_on && lock) && timeout
-                mmc.sleep(7); % wait 100ms
-                mmc.setProperty('TIPFSStatus', 'State', 'On');
+                mmc.sleep(2); % wait 7ms
+                if ~psf_on
+                    mmc.setProperty('TIPFSStatus', 'State', 'On');
+                end
                 pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
                 lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
                 timeout = timeout-1;
@@ -100,37 +103,57 @@ for t=1:TP
             mmc.setProperty('TIPFSStatus', 'State', 'Off');
             map(3, pos) = mmc.getPosition();
         end
-        mmc.waitForSystem();
         info(1, pos, t) = x_now;
         info(2, pos, t) = mmc.getYPosition();
         info(3, pos, t)= mmc.getPosition();
-        % begin continue acquitistion
+        % begin sequenced acquitistion
         mmc.startSequenceAcquisition(Z_NUM, 0, false);
         img = zeros(W, H, Z_NUM, 'uint16');
         slice = 1;
-        %fprintf(trigger, '%s', '1');
+        % trigger send pluse sequence to drive camera
         write(trigger, '1', 'string');
         while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice()))
             if mmc.getRemainingImageCount() > 0
-                %TODO: use arduino as wave generator to trigger camera
+                % pop image from buffer
                 img(:, :, slice)= uint16(reshape(mmc.popNextImage(), W, H));
                 slice = slice+1;
                 mmc.setRelativePosition('PiezoStage', Z_GAP);
             else
-                mmc.sleep(min(.5 * EXPOSURE, 20));
+                mmc.sleep(1);
             end
         end
+        
         mmc.stopSequenceAcquisition();
-        mmc.setPosition('PiezoStage', 50); % park to home position
-        fname = sprintf('%spos%dt%d.tiff', dataDir, pos, t);
-        %[pos 1 toc]
+        if pos < POS_NUM
+            % move to next position
+            x= map(1, pos+1); y= map(2, pos+1); z = map(3, pos+1);
+        else
+            % park to home
+            x= map(1, 1); y= map(2, 1); z = map(3, 1);
+        end
+        try 
+            mmc.setXYPosition(x, y);
+        catch 
+            disp("Stage is lost");
+            mmc.sleep(10);
+            mmc.setXYPosition(x, y);
+        end
+        mmc.setPosition('PiezoStage', 100); % park to home position
+        fname = sprintf('%s/pos%03dt%03d.tiff', dataDir, pos, t);
         saveastiff(img, fname);
-        [t pos 2 toc/600]
+        %TODO: may move stage here
+        disp([t pos 2 toc/600]);
     end
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
+    mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
     while( toc < t*600) 
-        mmc.sleep(1000); % 1000ms
+        mmc.sleep(10); % 1000ms
     end
 end
-
+% Unload all device mounted by micromanager
+prompt = 'Do you want to unload all device? Y/N [N]: ';
+str = input(prompt,'s');
+if str =='Y'
+    mmc.reset();
+end

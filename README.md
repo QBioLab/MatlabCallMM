@@ -39,10 +39,6 @@ For permanent setting, you should check step 4.
 
 ##  Experiment work flow
 
-## TODO
-1. confrim the respond time piezo
-2. prepare arduino trigger
-3. matlab imaris5 file
 
 ## Reference
 1. https://valelab4.ucsf.edu/~MM/doc-2.0.0-gamma/mmcorej/mmcorej/CMMCore.html

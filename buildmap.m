@@ -84,5 +84,4 @@ for p = 1:NP
     %mmc.snapImage()
     %map_imgs(:, :, p) = uint16(reshape(mmc.getImage(), W, H));
 end
-
 end
