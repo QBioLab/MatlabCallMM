@@ -15,7 +15,7 @@ Z_GAP = -0.5; % z gap in um
 if ~exist('mmc', 'var')
     mmc = initialize('config\spinningdisk_hamamatsu.cfg');    
 end
-mmc.setExposure(EXPOSURE);
+%mmc.setExposure(EXPOSURE);
 % set arduino as camera external trigger
 if ~exist('trigger', 'var')
     trigger = serialport('COM31', 57600);
@@ -27,7 +27,7 @@ if ~exist('map', 'var')
     [map, map_imgs] = buildmap(POS_NUM, mmc);
 end
 % park to home
-mmc.setXYPosition(map(1, 1), map(2,1));
+%mmc.setXYPosition(map(1, 1), map(2,1));
 
 % CAPTURE DARK FRAME
 if ~exist('df', 'var')
@@ -46,23 +46,23 @@ if ~exist('bf', 'var')
 end
 
 % OPEN LAMP FOR LIGHTON
-mmc.setProperty('TIDiaLamp', 'Intensity', 17);
-mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
+%mmc.setProperty('TIDiaLamp', 'Intensity', 17);
+%mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
+%mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
 % EXPERIMENT INFORMATION %
-pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
-info = zeros(4, POS_NUM, TP); % x,y,z,stage
+%pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
+%info = zeros(4, POS_NUM, TP); % x,y,z,stage
 
 % Load laser power sequence
-load('dynamic_excitation.mat', 'laser_dynamics')
+%load('dynamic_excitation.mat', 'laser_dynamics')
 % set laser to zeros for test
 %mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
+%mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
 
 tic
 %XYZT TIMELAPSE
-for t=1:TP
+for t=10:TP
     for pos=1:POS_NUM
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
@@ -93,7 +93,7 @@ for t=1:TP
             pfs_on = false; lock = false; timeout = 7;
             while ~( pfs_on && lock) && timeout
                 mmc.sleep(2); % wait 7ms
-                if ~psf_on
+                if ~pfs_on
                     mmc.setProperty('TIPFSStatus', 'State', 'On');
                 end
                 pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
@@ -147,7 +147,7 @@ for t=1:TP
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
     mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
-    while( toc < t*600) 
+    while( toc < (t-9)*600) 
         mmc.sleep(10); % 1000ms
     end
 end
