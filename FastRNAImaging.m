@@ -2,11 +2,11 @@
 % HF 20210118
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210119';
+dataDir='H:/20210122';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
-POS_NUM = 75; % total position number
+POS_NUM = 58; % total position number
 Z_NUM = 20; % total z slice number
 Z_GAP = -0.5; % z gap in um
 
@@ -56,7 +56,7 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
 
 tic
 %XYZT TIMELAPSE
-for t=10:TP
+for t=1:TP
     for pos=1:POS_NUM
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);

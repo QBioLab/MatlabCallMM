@@ -18,7 +18,7 @@ function mmc = initialize(config)
         mmc.setPosition('PiezoStage', 100); % park to home position
         mmc.setProperty('TIDiaLamp', 'State', 0); % close lamp
         % set camera ROI fit to scan header
-        mmc.setROI(16, 628, 1900, 1300);
+        mmc.setROI(16, 592, 1900, 1300);
         %set I/O function
         % set to external tiggger
         mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER SOURCE', 'EXTERNAL'); 
