@@ -85,10 +85,10 @@ for t=10:TP
             % wait util PFS is on 'LOCKED'
             pfs_on = false; lock = false; timeout = 7;
             while ~(pfs_on && lock) && timeout
-                mmc.sleep(70); % wait 7ms
+                mmc.sleep(100); % wait 7ms
                 if ~pfs_on
                     mmc.setProperty('TIPFSStatus', 'State', 'On');
-                    mmc.sleep(70); % wait 7ms
+                    mmc.sleep(100); % wait 7ms
                 end
                 pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
                 lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
