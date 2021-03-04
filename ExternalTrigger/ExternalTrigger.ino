@@ -18,7 +18,7 @@ void setup() {
   Serial.begin(57600); // opens serial port, sets data rate
 
   // Turn on build-in pull-up resistors
-  PORTC = PORTC | B00111111;
+  // PORTC = PORTC | B00111111;
   pinMode(ch1, OUTPUT);
   digitalWrite(ch1, LOW);
 }
