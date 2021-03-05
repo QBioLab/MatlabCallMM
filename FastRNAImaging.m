@@ -61,21 +61,33 @@ for t=1:TP
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
         x= map(1, pos); y= map(2, pos); z = map(3, pos);
-        x_now = mmc.getXPosition();
+        try
+            x_now = mmc.getXPosition();
+        catch ME
+            warning("Stage error");
+            % set x_now with drift to start calibration
+            x_now = x + 11;
+        end
         timeout = 2;
         mmc.waitForSystem() % maybe not necceesary
         % check stage's posotion
-        while(timeout>0 && (x_now - x)>10 )
+        while(timeout>0 && abs(x_now - x)>10 )
+            % count time of calibration
             info(4, pos, t) = info(4, pos, t) + 1;
             disp("correcting stage");
             try 
                 mmc.setXYPosition(x, y);
-            catch
-                mmc.sleep(20);
-                mmc.setXYPosition(x, y);
+            catch ME
+                %if (strcmp(ME.identifier, ''))
+                warning("Stage error");
             end
             mmc.sleep(30); 
-            x_now = mmc.getXPosition();
+            try
+                x_now = mmc.getXPosition();
+            catch ME
+                warning("Stage error");
+            end
+            mmc.sleep(30)
             timeout = timeout - 1; % try 2 times
         end
 
