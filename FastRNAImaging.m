@@ -1,8 +1,8 @@
 % Fast 3D imaging for C. elegans Neurons 
 % HF 20210118
-
+ 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210122';
+dataDir='H:/20210125';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
@@ -46,15 +46,15 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
-info = zeros(4, POS_NUM, TP); % x,y,z,stage
+info = zeros(5, POS_NUM, TP); % x,y,z,stage
 
 % Load laser power sequence
 load('dynamic_excitation.mat', 'laser_dynamics')
 % set laser to zeros for test
-%mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
+mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
 
-tic
+%tic
 %XYZT TIMELAPSE
 for t=1:TP
     for pos=1:POS_NUM
@@ -92,7 +92,7 @@ for t=1:TP
         end
 
         % Open PFS at each hour
-        if mod(t, 10)== 0 || t==1
+        if mod(t, 3)== 0 || t==1
             mmc.setProperty('TIPFSStatus', 'State', 'On');
             % wait util PFS is on 'LOCKED'
             pfs_on = false; lock = false; timeout = 7;
@@ -117,7 +117,8 @@ for t=1:TP
         
         info(1, pos, t) = x_now;
         info(2, pos, t) = mmc.getYPosition();
-        info(3, pos, t)= mmc.getPosition();
+        info(3, pos, t) = mmc.getPosition();
+        info(5, pos, t) = toc();
         % begin sequenced acquitistion
         mmc.startSequenceAcquisition(Z_NUM, 0, false);
         img = zeros(W, H, Z_NUM, 'uint16');

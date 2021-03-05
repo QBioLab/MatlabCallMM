@@ -39,6 +39,8 @@ For permanent setting, you should check step 4.
 
 ##  Experiment work flow
 
+## TODO
+1. turn off autoshutter
 
 ## Reference
 1. https://valelab4.ucsf.edu/~MM/doc-2.0.0-gamma/mmcorej/mmcorej/CMMCore.html
