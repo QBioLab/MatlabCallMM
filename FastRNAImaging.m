@@ -1,6 +1,6 @@
-% Fast 3D imaging for C. elegans Neurons 
-% HF 20210118
- 
+% Fast 3D imaging for mRNA  
+% HF 20210305
+
 % EXPERIMENT PARAMETERS %
 dataDir='H:/20210125';
 W = 1900; H = 1300; % camera pixel size
@@ -16,6 +16,11 @@ if ~exist('mmc', 'var')
     mmc = initialize('config\spinningdisk_hamamatsu.cfg');    
 end
 mmc.setExposure(EXPOSURE);
+%set external trigger
+mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER SOURCE', 'EXTERNAL');
+%set to global reset
+mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER GLOBAL EXPOSURE', 'GLOBAL RESET');
+
 % set arduino as camera external trigger
 if ~exist('trigger', 'var')
     trigger = serialport('COM31', 57600);
@@ -47,6 +52,7 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
 info = zeros(5, POS_NUM, TP); % x,y,z,stage
+diary(dataDir+"/matlab.log")
 
 % Load laser power sequence
 load('dynamic_excitation.mat', 'laser_dynamics')
@@ -65,8 +71,8 @@ for t=1:TP
             x_now = mmc.getXPosition();
         catch ME
             warning("Stage error");
-            % set x_now with drift to start calibration
-            x_now = x + 11;
+            % set x_now be 0 to start calibration
+            x_now = 0;
         end
         timeout = 2;
         mmc.waitForSystem() % maybe not necceesary
@@ -79,6 +85,7 @@ for t=1:TP
                 mmc.setXYPosition(x, y);
             catch ME
                 %if (strcmp(ME.identifier, ''))
+                
                 warning("Stage error");
             end
             mmc.sleep(30); 
@@ -91,33 +98,48 @@ for t=1:TP
             timeout = timeout - 1; % try 2 times
         end
 
-        % Open PFS at each hour
-        if mod(t, 3)== 0 || t==1
-            mmc.setProperty('TIPFSStatus', 'State', 'On');
+        % Open PFS each half of hour
+        if mod(t, 3)== 1 
             % wait util PFS is on 'LOCKED'
             pfs_on = false; lock = false; timeout = 7;
             while ~(pfs_on && lock) && timeout
                 mmc.sleep(100); % wait 7ms
                 if ~pfs_on
-                    mmc.setProperty('TIPFSStatus', 'State', 'On');
-                    mmc.sleep(100); % wait 7ms
+                    try 
+                        mmc.setProperty('TIPFSStatus', 'State', 'On');
+                        mmc.sleep(100); % wait 7ms
+                    end
                 end
-                pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
-                lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
+                try
+                    pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+                end
+                try
+                    lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
+                end
                 timeout = timeout-1;
             end
 			mmc.sleep(100); % sleep 100ms
             while pfs_on
-                mmc.setProperty('TIPFSStatus', 'State', 'Off');
+                try
+                    mmc.setProperty('TIPFSStatus', 'State', 'Off');
+                end
                 mmc.sleep(100);
-                pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+                try
+                    pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+                end
             end
-            map(3, pos) = mmc.getPosition();
+            try
+                map(3, pos) = mmc.getPosition();
+            end
         end
         
         info(1, pos, t) = x_now;
-        info(2, pos, t) = mmc.getYPosition();
-        info(3, pos, t) = mmc.getPosition();
+        try
+            info(2, pos, t) = mmc.getYPosition();
+        end
+        try
+            info(3, pos, t) = mmc.getPosition();
+        end
         info(5, pos, t) = toc();
         % begin sequenced acquitistion
         mmc.startSequenceAcquisition(Z_NUM, 0, false);
@@ -144,15 +166,39 @@ for t=1:TP
             % park to home
             x= map(1, 1); y= map(2, 1); z = map(3, 1);
         end
-        try 
-            mmc.setXYPosition(x, y);
-        catch 
-            disp("Stage is lost");
-            mmc.sleep(10);
-            mmc.setXYPosition(x, y);
+        timeout = 2
+        while(timeout > 0)
+            timeout = timeout - 1;
+            try 
+                mmc.setXYPosition(x, y);
+                timeout = 0;
+            catch 
+                disp("Stage is lost");
+                mmc.sleep(100);
+            end
         end
-        mmc.setPosition(z);
-        mmc.setPosition('PiezoStage', 100); % park to home position
+        timeout = 2
+        while(timeout > 0)
+            timeout = timeout - 1;
+            try 
+                mmc.setPosition(z);
+                timeout = 0;
+            catch 
+                disp("Stage is lost");
+                mmc.sleep(100);
+            end
+        end
+        while(timeout > 0)
+            timeout = timeout - 1;
+            try 
+                mmc.setPosition('PiezoStage', 100); % park to home position
+                timeout = 0;
+            catch 
+                disp("Stage is lost");
+                mmc.sleep(100);
+            end
+        end
+
         fname = sprintf('%s/pos%03dt%03d.tiff', dataDir, pos, t);
         saveastiff(img, fname);
         %TODO: may move stage here
