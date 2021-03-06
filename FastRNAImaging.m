@@ -131,12 +131,19 @@ for t=1:TP
                         pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
                     end
                 end
-                try
-                    z_last = map(3, pos);
-                    map(3, pos) = mmc.getPosition();
-                    z_drift(t) = map(3, pos) - z_last;
-                    % update all other position's z
-                    map(3, 2:end) = map(3, 2:end) + z_drift(t);
+                timeout = 2;
+                while(timeout >0)
+                    try
+                        z_last = map(3, pos);
+                        map(3, pos) = mmc.getPosition();
+                        z_drift(t) = map(3, pos) - z_last;
+                        % update all other position's z
+                        if abs(z_drift(t)) < 15 % only update when drift less than 15um
+                            map(3, 2:end) = map(3, 2:end) + z_drift(t);
+                            timeout = 0;
+                        end
+                    end
+                    timeout = timeout - 1;
                 end
             end
         end
@@ -212,7 +219,7 @@ for t=1:TP
         fname = sprintf('%s/pos%03dt%03d.tiff', dataDir, pos, t);
         saveastiff(img, fname);
         %TODO: may move stage here
-        disp([t pos 2 toc/600]);
+        disp([t pos toc/600]);
     end
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
