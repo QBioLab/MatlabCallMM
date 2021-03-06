@@ -51,6 +51,7 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
+z_drift = zeros(TP); % z drift
 info = zeros(5, POS_NUM, TP); % x,y,z,stage
 diary(dataDir+"/matlab.log")
 
@@ -59,24 +60,24 @@ load('dynamic_excitation.mat', 'laser_dynamics')
 % set laser to zeros for test
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
+mmc.waitForSystem();
 
-%tic
+tic
 %XYZT TIMELAPSE
 for t=1:TP
     for pos=1:POS_NUM
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
-        x= map(1, pos); y= map(2, pos); z = map(3, pos);
+        x = map(1, pos); y = map(2, pos); z = map(3, pos);
         try
             x_now = mmc.getXPosition();
         catch ME
             warning("Stage error");
-            % set x_now be 0 to start calibration
-            x_now = 0;
+            x_now = 0; % set x_now be 0 to start calibration
         end
-        timeout = 2;
         mmc.waitForSystem() % maybe not necceesary
         % check stage's posotion
+        timeout = 2;
         while(timeout>0 && abs(x_now - x)>10 )
             % count time of calibration
             info(4, pos, t) = info(4, pos, t) + 1;
@@ -99,37 +100,44 @@ for t=1:TP
         end
 
         % Open PFS each half of hour
-        if mod(t, 3)== 1 
-            % wait util PFS is on 'LOCKED'
-            pfs_on = false; lock = false; timeout = 7;
-            while ~(pfs_on && lock) && timeout
-                mmc.sleep(100); % wait 7ms
-                if ~pfs_on
-                    try 
-                        mmc.setProperty('TIPFSStatus', 'State', 'On');
-                        mmc.sleep(100); % wait 7ms
+        if mod(t, 3) == 1 
+            if pos == 1
+                % wait util PFS is on 'LOCKED'
+                pfs_on = false; lock = false; timeout = 3;
+                while ~(pfs_on && lock) && timeout
+                    mmc.sleep(100); % wait 7ms
+                    if ~pfs_on
+                        try 
+                            mmc.setProperty('TIPFSStatus', 'State', 'On');
+                            mmc.sleep(100); % wait 100ms
+                        end
+                    end
+                    try
+                        pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+                    end
+                    try
+                        lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
+                    end
+                    timeout = timeout-1;
+                end
+			    mmc.sleep(100); % sleep 100ms
+                % close PFS
+                while pfs_on
+                    try
+                        mmc.setProperty('TIPFSStatus', 'State', 'Off');
+                    end
+                    mmc.sleep(100);
+                    try
+                        pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
                     end
                 end
                 try
-                    pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+                    z_last = map(3, pos);
+                    map(3, pos) = mmc.getPosition();
+                    z_drift(t) = map(3, pos) - z_last;
+                    % update all other position's z
+                    map(3, 2:end) = map(3, 2:end) + z_drift(t);
                 end
-                try
-                    lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
-                end
-                timeout = timeout-1;
-            end
-			mmc.sleep(100); % sleep 100ms
-            while pfs_on
-                try
-                    mmc.setProperty('TIPFSStatus', 'State', 'Off');
-                end
-                mmc.sleep(100);
-                try
-                    pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
-                end
-            end
-            try
-                map(3, pos) = mmc.getPosition();
             end
         end
         
@@ -141,11 +149,12 @@ for t=1:TP
             info(3, pos, t) = mmc.getPosition();
         end
         info(5, pos, t) = toc();
+
         % begin sequenced acquitistion
         mmc.startSequenceAcquisition(Z_NUM, 0, false);
         img = zeros(W, H, Z_NUM, 'uint16');
         slice = 1;
-        % trigger send pluse sequence to drive camera
+        % Arudino trigger send pluse sequence to drive camera
         write(trigger, '1', 'string');
         while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice()))
             if mmc.getRemainingImageCount() > 0
@@ -157,8 +166,8 @@ for t=1:TP
                 mmc.sleep(1);
             end
         end
-        
         mmc.stopSequenceAcquisition();
+
         if pos < POS_NUM
             % move to next position
             x= map(1, pos+1); y= map(2, pos+1); z = map(3, pos+1);
@@ -188,6 +197,7 @@ for t=1:TP
                 mmc.sleep(100);
             end
         end
+        timeout = 2
         while(timeout > 0)
             timeout = timeout - 1;
             try 
