@@ -2,7 +2,7 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210306';
+dataDir='H:/20210307';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
@@ -47,7 +47,7 @@ if ~exist('df', 'var')
 end
 
 % OPEN LAMP FOR LIGHTON
-mmc.setProperty('TIDiaLamp', 'Intensity', 7);
+mmc.setProperty('TIDiaLamp', 'Intensity', 5);
 mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
