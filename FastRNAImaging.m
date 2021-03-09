@@ -2,7 +2,7 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210307';
+dataDir='H:/20210309';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
@@ -47,7 +47,7 @@ if ~exist('df', 'var')
 end
 
 % OPEN LAMP FOR LIGHTON
-mmc.setProperty('TIDiaLamp', 'Intensity', 5);
+mmc.setProperty('TIDiaLamp', 'Intensity', 7);
 mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
@@ -65,7 +65,7 @@ mmc.waitForSystem();
 
 tic
 %XYZT TIMELAPSE
-for t=1:TP
+for t=3:TP
     for pos=1:POS_NUM
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
@@ -101,7 +101,7 @@ for t=1:TP
         end
 
         % Open PFS each half of hour
-        if mod(t, 3) == 1 
+        if mod(t, 2) == 1 
             %if pos == 1
             if true
                 % wait util PFS is on 'LOCKED'
@@ -226,13 +226,13 @@ for t=1:TP
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
     mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
-    while( toc < t*600) 
+    while( toc < (t-2)*600) 
         mmc.sleep(10); % 1000ms
     end
 end
 % Unload all device mounted by micromanager
 prompt = 'Do you want to unload all device? Y/N [N]: ';
 str = input(prompt,'s');
-if str =='Y'
-    mmc.reset();
+if (str =='Y') | (str == 'y')
+    mmc.reset(); 
 end

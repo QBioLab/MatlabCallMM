@@ -73,9 +73,11 @@ for p = 1:NP
     % wait PFS is on 'LOCKED'
     pfs_on = false; lock = false;
     while ~( pfs_on && lock)
-        mmc.sleep(7); % wait 100ms
+        mmc.sleep(100); % wait 100ms
         mmc.setProperty('TIPFSStatus', 'State', 'On');
+        mmc.sleep(100);
         pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+        mmc.sleep(100);
         lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
     end
     % update TI-FOCUS's z poition in map 
