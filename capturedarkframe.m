@@ -2,7 +2,7 @@ function darkframes = capturedarkframe(mmc, trigger)
     W = 1900; % mmc.getImageWidth
     H = 1300;
     Z_NUM = 20; % fit to trigger
-    repeat = 10;
+    repeat = 50;
     % begin sequenced acquitistion
 	laser_power = mmc.getProperty('AndorLaserCombiner', 'PowerSetpoint561');
 	%close laser

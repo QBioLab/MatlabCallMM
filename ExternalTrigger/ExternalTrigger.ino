@@ -34,16 +34,15 @@ void loop() {
       // trigger camera in certain time gap
       for(int i=0; i<z_num; i++){
         timer0 = millis();
-        digitalWrite(ch1, LOW);
-        delay(10); // sleep 1ms
         digitalWrite(ch1, HIGH);
+        delay(10); // sleep 1ms
+        digitalWrite(ch1, LOW);
         while(millis() - timer0 < t_gap){
           delay(1);
           }
       }
-            //digitalWrite(ch1, HIGH); 
    } else {                    // If incomingByte = 0, turn channel 1 off
-      digitalWrite(ch1, HIGH); 
+      digitalWrite(ch1, LOW); 
     }
   }
 }

@@ -18,7 +18,7 @@ function mmc = initialize(config)
         mmc.setPosition('PiezoStage', 100); % park to home position
         mmc.setProperty('TIDiaLamp', 'State', 0); % close lamp
         % set camera ROI fit to scan header
-        mmc.setROI(16, 592, 1900, 1300);
+        mmc.setROI(9, 574, 1900, 1300);
         %set I/O function
         % set to external tiggger
         mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER SOURCE', 'EXTERNAL'); 
@@ -27,7 +27,7 @@ function mmc = initialize(config)
         %set to global reset
         mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER GLOBAL EXPOSURE', 'GLOBAL RESET');
         %set trigger be positive polarity
-        mmc.setProperty('HamamatsuHam_DCAM', 'TriggerPolarity', 'NEGATIVE');
+        mmc.setProperty('HamamatsuHam_DCAM', 'TriggerPolarity', 'POSITIVE');
  
         mmc.setProperty('HamamatsuHam_DCAM', 'ScanMode', 1);
         % open and set laser, 0-10 
