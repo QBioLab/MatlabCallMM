@@ -53,7 +53,11 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
+<<<<<<< HEAD
 z_drift = zeros(TP, 1); % z drift
+=======
+z_drift = zeros(TP); % z drift
+>>>>>>> c60eb4660e26ef63eee8ee35c35f8bdb4fa30b9e
 info = zeros(5, POS_NUM, TP); % x,y,z,stage
 
 % Load laser power sequence
@@ -76,7 +80,11 @@ for t=3:TP
             warning("Stage error");
             x_now = 0; % set x_now be 0 to start calibration
         end
+<<<<<<< HEAD
         mmc.waitForSystem(); % maybe not necceesary
+=======
+        mmc.waitForSystem() % maybe not necceesary
+>>>>>>> c60eb4660e26ef63eee8ee35c35f8bdb4fa30b9e
         % check stage's posotion
         timeout = 2;
         while(timeout>0 && abs(x_now - x)>10 )
@@ -101,9 +109,14 @@ for t=3:TP
         end
 
         % Open PFS each half of hour
+<<<<<<< HEAD
         if mod(t, 2) == 1 
             %if pos == 1
             if true
+=======
+        if mod(t, 3) == 1 
+            if pos == 1
+>>>>>>> c60eb4660e26ef63eee8ee35c35f8bdb4fa30b9e
                 % wait util PFS is on 'LOCKED'
                 pfs_on = false; lock = false; timeout = 3;
                 while ~(pfs_on && lock) && timeout
@@ -134,6 +147,7 @@ for t=3:TP
                     end
                 end
                 timeout = 2;
+<<<<<<< HEAD
                 while(timeout >0 )
                     try
                         z_last = map(3, pos);
@@ -144,6 +158,18 @@ for t=3:TP
                          %   map(3, 2:end) = map(3, 2:end) + z_drift(t);
                          %   timeout = 0;
                         %end
+=======
+                while(timeout >0)
+                    try
+                        z_last = map(3, pos);
+                        map(3, pos) = mmc.getPosition();
+                        z_drift(t) = map(3, pos) - z_last;
+                        % update all other position's z
+                        if abs(z_drift(t)) < 15 % only update when drift less than 15um
+                            map(3, 2:end) = map(3, 2:end) + z_drift(t);
+                            timeout = 0;
+                        end
+>>>>>>> c60eb4660e26ef63eee8ee35c35f8bdb4fa30b9e
                     end
                     timeout = timeout - 1;
                 end
@@ -206,7 +232,11 @@ for t=3:TP
                 mmc.sleep(100);
             end
         end
+<<<<<<< HEAD
         timeout = 2;
+=======
+        timeout = 2
+>>>>>>> c60eb4660e26ef63eee8ee35c35f8bdb4fa30b9e
         while(timeout > 0)
             timeout = timeout - 1;
             try 
