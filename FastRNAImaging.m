@@ -54,7 +54,9 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
 z_drift = zeros(TP, 1); % z drift
-info = zeros(5, POS_NUM, TP); % x,y,z,stage
+if ~exist('info', 'var')
+    info = zeros(5, POS_NUM, TP); % x,y,z,stage
+end
 
 % Load laser power sequence
 load('dynamic_excitation.mat', 'laser_dynamics')
