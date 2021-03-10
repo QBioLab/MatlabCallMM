@@ -67,7 +67,7 @@ mmc.waitForSystem();
 
 tic
 %XYZT TIMELAPSE
-for t=1:TP
+for t=2:TP
     t_clock = clock;
     t0=sum(t_clock(3:end).*[1440 60 1 1/60]);
     for pos=1:POS_NUM
@@ -246,7 +246,7 @@ for t=1:TP
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
     mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
-    while( t1-t0 < 600) 
+    while( t1-t0 < 10) 
         t_next=clock;
         t1=sum(t_next(3:end).*[1440 60 1 1/60]*1);
         mmc.sleep(10); % 1000ms
