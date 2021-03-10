@@ -41,6 +41,7 @@ For permanent setting, you should check step 4.
 
 ## TODO
 1. turn off autoshutter
+2. Do PFS each time for different position
 
 ## Reference
 1. https://valelab4.ucsf.edu/~MM/doc-2.0.0-gamma/mmcorej/mmcorej/CMMCore.html

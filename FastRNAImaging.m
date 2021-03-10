@@ -104,7 +104,21 @@ for t=1:TP
 
         % Open PFS each half of hour
         if mod(t, 2) == 1 
+            % MUST CONFIRM PiezoStage at home position
+            timeout = 2;
+            while(timeout > 0)
+                timeout = timeout - 1;
+                try 
+                    mmc.setPosition('PiezoStage', 100); % park to home position
+                    timeout = 0;
+                catch 
+                    disp("Stage is lost");
+                    mmc.sleep(100);
+                end
+            end
+
             %if pos == 1
+
             if true
                 % wait util PFS is on 'LOCKED'
                 pfs_on = false; lock = false; timeout = 3;
