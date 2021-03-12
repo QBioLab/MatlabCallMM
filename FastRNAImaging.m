@@ -2,7 +2,7 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210309';
+dataDir='H:/20210311';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
@@ -48,13 +48,14 @@ end
 
 % OPEN LAMP FOR LIGHTON
 mmc.setProperty('TIDiaLamp', 'Intensity', 7);
-mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
 z_drift = zeros(TP, 1); % z drift
-info = zeros(5, POS_NUM, TP); % x,y,z,stage
+if ~exist('info', 'var')
+    info = zeros(5, POS_NUM, TP); % x,y,z,stage
+end
 
 % Load laser power sequence
 load('dynamic_excitation.mat', 'laser_dynamics')
@@ -65,7 +66,10 @@ mmc.waitForSystem();
 
 tic
 %XYZT TIMELAPSE
-for t=3:TP
+mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
+for t=1:TP
+    t_clock = clock;
+    t0=sum(t_clock(3:end).*[1440 60 1 1/60]);
     for pos=1:POS_NUM
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
@@ -171,7 +175,9 @@ for t=3:TP
         try
             info(3, pos, t) = mmc.getPosition();
         end
-        info(5, pos, t) = toc();
+        t_next=clock;
+        t1=sum(t_next(3:end).*[1440 60 1 1/60]*1);
+        info(5, pos, t) = t1;
 
         % begin sequenced acquitistion
         mmc.startSequenceAcquisition(Z_NUM, 0, false);
@@ -240,7 +246,9 @@ for t=3:TP
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
     mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
-    while( toc < (t-2)*600) 
+    while( t1-t0 < 10) 
+        t_next=clock;
+        t1=sum(t_next(3:end).*[1440 60 1 1/60]*1);
         mmc.sleep(10); % 1000ms
     end
 end
