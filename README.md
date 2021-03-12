@@ -1,10 +1,9 @@
 # Matlab Call Micro-Manager
 
-
 ## Setting Matlab and Micro-Manager
 We almost follow [Micro-Manager wiki](https://micro-manager.org/wiki/Matlab_Configuration).
 
-We tested on Matlab2017b and Micro-Manager 2.0-gamma(2020525). but should work
+We tested on Matlab(2017b, 2020) and Micro-Manager 2.0-gamma(20210312), but should work
 on other version.
 
 1. Install Micro-Manager and Andor Driver(just for andor camera) in same folder
@@ -38,4 +37,22 @@ current Matlab working directory. If you just change current working directory
 to Micro-Manager installation directory, Andor driver could be loaded normally.
 For permanent setting, you should check step 4.
 
-##  Experiment work flow
+IMPORTANT NOTE:
+If camera set to 16 bit, `mmc.getImage()` will returen a 1D array of signed
+integers in row-major order in Matlab, we must interpreted it as unsigned integers.
+```matlab
+>> mmc.snapImage();
+>> img = mmc.getImage();  % returned as a 1D array of signed integers in row-major order
+>> width = mmc.getImageWidth();
+>> height = mmc.getImageHeight();
+>> if mmc.getBytesPerPixel == 2
+    pixelType = 'uint16';
+else
+    pixelType = 'uint8';
+end
+>> img = typecast(img, pixelType);      % pixels must be interpreted as unsigned integers
+>> img = reshape(img, [width, height]); % image should be interpreted as a 2D array
+>> img = transpose(img);                % make column-major order for MATLAB
+>> imshow(img);
+```
+

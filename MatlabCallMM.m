@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Key action to capture image, move stage, control PFS
-% HF 20200522
+% HF 20210312
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   if exist('mmc', 'var')
@@ -9,24 +9,32 @@
     mmc = initialize('C:\Users\qblab\Documents\MMConfig_Ti.cfg');
   end
 
-mmc.getExposure()
-mmc.setExposure(5)
-mmc.waitForImageSynchro()
-% set XY position
-mmc.setXYPosition(mmc.getXPosition, mmc.getYPosition)
-% set Z position
-mmc.setPosition(3800)
-%
-mmc.getProperty('TIPFSStatus', 'State')
- %mmc.setProperty('TIPFSStatus', 'State', 'Off')
-mmc.getProperty('TIPFSOffset', 'Position')
-%mmc.setProperty('TIPFSOffset', 'Position', 96)
-mmc.setProperty('TIPFSStatus', 'State', 'On')
-mmc.snapImage()
-imgtmp = mmc.getImage();
+% Set Default Camera exposure in ms
+mmc.setExposure(5);
+% Get and Set XY position in um
+mmc.setXYPosition(mmc.getXPosition, mmc.getYPosition);
+% Set Z focuser position in um
+mmc.setPosition(3800);
+% Get Ti PFS state and Position
+mmc.getProperty('TIPFSStatus', 'State');
+mmc.getProperty('TIPFSOffset', 'Position');
+% Turn On Ti PFS
+mmc.setProperty('TIPFSStatus', 'State', 'On');
+
+% Exposure Single Image 
+mmc.snapImage();
+% Return a 1D array of signed integers in row-major order
+imgtmp = mmc.getImage(); 
 w = mmc.getImageWidth();
 h = mmc.getImageHeight();
+if mmc.getBytesPerPixel == 2
+    pixelType = 'uint16';
+else
+    pixelType = 'uint8';
+end
+% Interprete pixels as unsigned integers
+img = typecast(img, pixelType); 
+% Interprete as a 2D array
 img = reshape(imgtmp, w, h);
-%imgfile = Tiff('test',  'w');
-%imgfile.write(img)
-%metadata.write();
+% Make column-major order for MATLAB
+img = transpose(img);
