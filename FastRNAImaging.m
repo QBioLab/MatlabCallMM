@@ -2,7 +2,7 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210310';
+dataDir='H:/20210311';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
@@ -48,7 +48,6 @@ end
 
 % OPEN LAMP FOR LIGHTON
 mmc.setProperty('TIDiaLamp', 'Intensity', 7);
-mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
 
 % EXPERIMENT INFORMATION %
@@ -67,7 +66,8 @@ mmc.waitForSystem();
 
 tic
 %XYZT TIMELAPSE
-for t=2:TP
+mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
+for t=1:TP
     t_clock = clock;
     t0=sum(t_clock(3:end).*[1440 60 1 1/60]);
     for pos=1:POS_NUM
