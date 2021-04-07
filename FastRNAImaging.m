@@ -2,7 +2,7 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/2021031';
+dataDir='H:/20210401';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
@@ -65,6 +65,7 @@ mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
 mmc.waitForSystem();
 
 tic
+
 %XYZT TIMELAPSE
 mmc.setProperty('TIDiaLamp', 'State', 1); % open lamp
 for t=1:TP
@@ -82,7 +83,7 @@ for t=1:TP
         end
         mmc.waitForSystem(); % maybe not necceesary
         % check stage's posotion
-        timeout = 2;
+        timeout = 2;N
         while(timeout>0 && abs(x_now - x)>10 )
             % count time of calibration
             info(4, pos, t) = info(4, pos, t) + 1;
@@ -105,7 +106,8 @@ for t=1:TP
         end
 
         % Open PFS each half of hour
-        if mod(t, 2) == 1 
+        %if mod(t, 2) == 1 
+        if true
             % MUST CONFIRM PiezoStage at home position
             timeout = 2;
             while(timeout > 0)
@@ -188,7 +190,8 @@ for t=1:TP
         while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice()))
             if mmc.getRemainingImageCount() > 0
                 % pop image from buffer
-                img(:, :, slice)= uint16(reshape(mmc.popNextImage(), W, H));
+                img_raw = typecast(mmc.popNextImage(), 'uint16');
+                img(:, :, slice)= uint16(reshape(img_raw, W, H));
                 slice = slice+1;
                 mmc.setRelativePosition('PiezoStage', Z_GAP);
             else

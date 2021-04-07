@@ -12,7 +12,7 @@ int incomingByte = 0; // for incoming serial data
 const unsigned int ch1 = 3; // pin3
 const unsigned int z_num = 20;
 unsigned long int timer0 = millis();
-unsigned int t_gap = 390; //150ms time gap
+unsigned int t_gap = 370; //150ms time gap
 
 void setup() {
   Serial.begin(57600); // opens serial port, sets data rate
