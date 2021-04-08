@@ -72,11 +72,11 @@ for p = 1:NP
     mmc.setProperty('TIPFSStatus', 'State', 'On');
     % wait PFS is on 'LOCKED'
     pfs_on = false; lock = false;
-    while ~( pfs_on && lock)
-        mmc.sleep(100); % wait 100ms
-        mmc.setProperty('TIPFSStatus', 'State', 'On');
-        mmc.sleep(100);
-        pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+    while ~( pfs_on && lock)	
+		mmc.sleep(100); % wait 100ms
+		mmc.setProperty('TIPFSStatus', 'State', 'On');
+		mmc.sleep(100);
+		pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
         mmc.sleep(100);
         lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
     end
