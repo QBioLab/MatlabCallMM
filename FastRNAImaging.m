@@ -2,11 +2,11 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210401';
+dataDir='H:/20210408';
 W = 1900; H = 1300; % camera pixel size
-EXPOSURE = 280; % camera exposure time in ms
+EXPOSURE = 250; % camera exposure time in ms
 TP = 120; % total time points
-POS_NUM = 58; % total position number
+POS_NUM = 64; % total position number
 Z_NUM = 20; % total z slice number
 Z_GAP = -0.5; % z gap in um
 diary(dataDir+"/matlablog.log")
@@ -48,7 +48,7 @@ end
 
 % OPEN LAMP FOR LIGHTON
 mmc.setProperty('TIDiaLamp', 'Intensity', 7);
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '10');
+mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '9.4');
 
 % EXPERIMENT INFORMATION %
 pfs_offset = mmc.getProperty('TIPFSOffset', 'Position');
@@ -60,8 +60,8 @@ end
 % Load laser power sequence
 load('dynamic_excitation.mat', 'laser_dynamics')
 % set laser to zeros for test
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
-mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
+%mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', '0'); 
+%mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(1))
 mmc.waitForSystem();
 
 tic
@@ -83,7 +83,7 @@ for t=1:TP
         end
         mmc.waitForSystem(); % maybe not necceesary
         % check stage's posotion
-        timeout = 2;N
+        timeout = 2;
         while(timeout>0 && abs(x_now - x)>10 )
             % count time of calibration
             info(4, pos, t) = info(4, pos, t) + 1;
@@ -158,12 +158,6 @@ for t=1:TP
                     try
                         z_last = map(3, pos);
                         map(3, pos) = mmc.getPosition();
-                        %z_drift(t) = map(3, pos) - z_last;
-                        % update all other position's z
-                        %if abs(z_drift(t)) < 15 % only update when drift less than 15um
-                         %   map(3, 2:end) = map(3, 2:end) + z_drift(t);
-                         %   timeout = 0;
-                        %end
                     end
                     timeout = timeout - 1;
                 end
@@ -248,7 +242,7 @@ for t=1:TP
     end
     % wait til 10 min
     save([dataDir '/all_info.mat'], 'pfs_offset', 'map', 'info');
-    mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
+    %mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint561', laser_dynamics(t));
     while( t1-t0 < 10) 
         t_next=clock;
         t1=sum(t_next(3:end).*[1440 60 1 1/60]*1);

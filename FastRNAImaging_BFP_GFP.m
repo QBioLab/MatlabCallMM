@@ -2,7 +2,7 @@
 % HF 20210305
 
 % EXPERIMENT PARAMETERS %
-dataDir='H:/20210401';
+dataDir='H:/20210408';
 W = 1900; H = 1300; % camera pixel size
 EXPOSURE = 280; % camera exposure time in ms
 TP = 120; % total time points
