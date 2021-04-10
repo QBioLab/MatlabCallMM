@@ -4,7 +4,7 @@
 % EXPERIMENT PARAMETERS %
 dataDir='H:/20210408';
 W = 1900; H = 1300; % camera pixel size
-EXPOSURE = 280; % camera exposure time in ms
+EXPOSURE = 250; % camera exposure time in ms
 TP = 120; % total time points
 POS_NUM = 58; % total position number
 Z_NUM = 20; % total z slice number
@@ -22,6 +22,7 @@ mmc.setExposure(EXPOSURE);
 mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER SOURCE', 'INTERNAL');
 %set to global reset
 mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER GLOBAL EXPOSURE', 'GLOBAL RESET');
+%mmc.setProperty('HamamatsuHam_DCAM', 'TRIGGER GLOBAL EXPOSURE', 'DELAYED');
 mmc.setProperty('Wheel-A', 'Label','Filter-4');
 %mmc.setProperty('CSUX-Dichroic', 'State', 0);
 
@@ -37,7 +38,7 @@ mmc.waitForSystem();
 
 tic
 %XYZT TIMELAPSE
-for t=120:120
+for t=121:121
     for pos=1:POS_NUM
         % move to next target point
         disp(['Current: ', 't', num2str(t),' p', num2str(pos)]);
@@ -142,7 +143,7 @@ for t=120:120
         % begin sequenced acquitistion
         imgB = zeros(W, H, Z_NUM, 'uint16');
         imgG = zeros(W, H, Z_NUM, 'uint16');
-        for slice=1:Z_NUM;
+        for slice=1:Z_NUM
                 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint405', '5'); 
                 mmc.sleep(20);
                 mmc.snapImage();
@@ -155,7 +156,6 @@ for t=120:120
                 img_raw = typecast(mmc.getImage(), 'uint16');
                 imgG(:, :, slice)= uint16(reshape(img_raw, W, H)); 
                 mmc.setProperty('AndorLaserCombiner', 'PowerSetpoint488', '0');
-                
                 mmc.setRelativePosition('PiezoStage', Z_GAP);
                 mmc.sleep(20);
         end
