@@ -1,4 +1,4 @@
-function [map, map_imgs] = buildmap(NP, mmc)
+function [map, map_imgs] = buildmap(NP, mmc, includeZ)
 % find xyz position
 % NOTE: start point should close to dish center; only acess n*n
 % Method 1: full-auto
@@ -7,6 +7,13 @@ function [map, map_imgs] = buildmap(NP, mmc)
 % Usage: 
 % Version Commit 
 % 0.1     1st, hf, 20210113
+% 0.1.1   focus Z is option, hf, 20210510
+
+if nargin < 3 % use default options
+    includeZ = true
+else
+    includeZ = false
+end
 
 % absolute stage position in micron
 dx = 2100*6.5/60; % gap between x-axis in micron
@@ -58,33 +65,35 @@ orign_z = mmc.getPosition();
 map = spiral .* repmat([dx; dy; dz],1,NP) + [orign_x; orign_y; orign_z];
 % park piezeo stage close to 0
 %mmc.setPosition('PiezoStage', 50);
-mmc.setProperty('TIPFSStatus', 'State', 'Off');
-W = 1900; H = 1300; % camera pixel 
-map_imgs = zeros(W, H, NP, 'uint16'); % Save camera image
-% search focus for each point
-for p = 1:NP
-    disp(['Moving and focusing to point ', num2str(p)]);
-    x = map(1, p); y = map(2, p);
-    %TODO: add auto focus fail handler
-    mmc.setXYPosition(x, y);
-    mmc.sleep(200);
-    mmc.waitForSystem();
-    mmc.setProperty('TIPFSStatus', 'State', 'On');
-    % wait PFS is on 'LOCKED'
-    pfs_on = false; lock = false;
-    while ~( pfs_on && lock)	
-		mmc.sleep(100); % wait 100ms
-		mmc.setProperty('TIPFSStatus', 'State', 'On');
-		mmc.sleep(100);
-		pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
-        mmc.sleep(100);
-        lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
-    end
-    % update TI-FOCUS's z poition in map 
-    map(3, p) = mmc.getPosition();
+if includeZ
     mmc.setProperty('TIPFSStatus', 'State', 'Off');
-    %mmc.snapImage()
-    %map_imgs(:, :, p) = uint16(reshape(mmc.getImage(), W, H));
+    W = 1900; H = 1300; % camera pixel 
+    map_imgs = zeros(W, H, NP, 'uint16'); % Save camera image
+    % search focus for each point
+    for p = 1:NP
+        disp(['Moving and focusing to point ', num2str(p)]);
+        x = map(1, p); y = map(2, p);
+        %TODO: add auto focus fail handler
+        mmc.setXYPosition(x, y);
+        mmc.sleep(200);
+        mmc.waitForSystem();
+        mmc.setProperty('TIPFSStatus', 'State', 'On');
+        % wait PFS is on 'LOCKED'
+        pfs_on = false; lock = false;
+        while ~( pfs_on && lock)	
+		    mmc.sleep(100); % wait 100ms
+    		mmc.setProperty('TIPFSStatus', 'State', 'On');
+	    	mmc.sleep(100);
+		    pfs_on = strcmp(mmc.getProperty('TIPFSStatus', 'State'), 'On');
+            mmc.sleep(100);
+            lock = strcmp(mmc.getProperty('TIPFSStatus', 'Status'),  'Locked in focus');
+        end
+        % update TI-FOCUS's z poition in map 
+        map(3, p) = mmc.getPosition();
+        mmc.setProperty('TIPFSStatus', 'State', 'Off');
+        %mmc.snapImage()
+        %map_imgs(:, :, p) = uint16(reshape(mmc.getImage(), W, H));
+    end
+    mmc.setXYPosition(map(1, 1), map(2, 1));
 end
-mmc.setXYPosition(map(1, 1), map(2, 1));
 end
