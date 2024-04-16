@@ -12,7 +12,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 0-5: 
 
-data_dir = 'd:\td\20201203';
+data_dir = 'd:\td\20201205';
 PFS = 4000/40;
 
 if exist('mmc', 'var')
@@ -68,7 +68,7 @@ end
 mmc.setProperty('TIPFSStatus', 'State', 'Off');
 %mmc.setPosition(all_pos(1, 3)); % only run at the first time to set zpos
 
-for i =16: pos_num
+for i =1: pos_num
      %[i 0 mmc.getPosition()]
     disp(i);
     % Set new position and set PFS
