@@ -3,15 +3,15 @@
 % | 20240318| integrate mm gui @HF
 % | 20240416| renew metadata framework@HF
 
+metainfo_file = '\\data.qblab.science/datahub/hardware/MMConfigure/plate_calibration/A384well/plate4_20240424_rapid_scan_plate_A384_10x.json';
+%metainfo_file = 'C:/Users/qblab/Downloads/plate4_20240423_rapid_scan_plate_A384_10x.json';
 
-metainfo_file = '\\data.qblab.science/datahub/hardware/MMConfigure/plate_calibration/A384well/plate4  _20240418_rapid_scan_plate_A384_10x.json';
 tic
 addpath 'C:/Users/qblab/Desktop/MMConfigure';
 clear metainfo_json metainfo
 metainfo_json = fileread(metainfo_file);
 metainfo = jsondecode(metainfo_json);
-
-sample_name=metainfo.sample_name;
+sample_name=metainfo.sample_name;  
 data_dir = metainfo.data_dir;
 
 if ~exist('mmc', 'var')
@@ -56,9 +56,9 @@ H=mmc.getImageHeight();
 pos_num = length(metainfo.position_list);
 metainfo.log.time_list=zeros(pos_num, 1);
 metainfo.log.z_list=zeros(pos_num, 1);
+metainfo.log.pfs = mmc.getPosition('PFSOffset');
 
 chsetup = metainfo.chsetup;
-
 exposure_seq = metainfo.exposure_sequence;
 channel_seq = metainfo.channel_sequence;
 channel_num = int32(length(channel_seq));
@@ -126,7 +126,7 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
         tags_list=[tags_list tag];
         fname=sprintf('%s/ch%d/%s_pos%dc%d.tiff', ...
             data_dir, ch_idx, name, pos_uid, ch_idx);
-        fname_list = [fname_list fname];
+        fname_list = [fname_list string(fname)]; 
         
         disp(['Sample:' sample_name ' pos:' name ...
             ' captured/total:' num2str(int32(pos_idx)) '/' num2str(pos_num)...
@@ -152,9 +152,10 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
         % save file during next exposure
         img_raw=typecast(tagged.pix, 'uint16');
         img=uint16(reshape(img_raw, W, H));
-        saveastiff(img, fname, tiff_options);
+        %saveastiff(img, fname, tiff_options); %blocking write
+        parfeval(@saveastiff, 0,img, fname, tiff_options);%non-blocking write
     else
-        mmc.sleep(100)
+        mmc.sleep(50)
     end
 end
 
