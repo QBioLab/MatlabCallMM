@@ -2,3 +2,4 @@
 *.asv
 *~
 *.mex*
+.ipynb_checkpoints
