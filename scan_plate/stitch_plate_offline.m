@@ -1,8 +1,7 @@
-clear all
+function [plate]=stitch_plate_offline(metainfo_json_fname, dest_folder)
 addpath ../lib
 %metainfo_file = 'H:\XJF\20240420\plate1-sto-gfp-conditioned-medium\plate1-sto-gfp-conditioned-medium.json';
-[metainfo_file, metainfo_dir]=uigetfile('.json');
-metainfo = read_json([metainfo_dir metainfo_file]);
+metainfo = read_json(metainfo_json_fname);
 
 % camera : photometrics kinitex (3200x3200 6.5um)
 nx=metainfo.roi(3); 
@@ -28,7 +27,8 @@ shrinked_dark_field=imresize(dark_field_pad,Shrink);
 plate.exp=metainfo.sample_name;
 plate.folder_input=metainfo.data_dir;
 plate.folder_input(1)='H';
-plate.folder_out=['Y:\analysis_plate_clones\assembled_plates\XJF\20240420\' plate.exp '-subtraced_background'];
+%plate.folder_out=['Y:\analysis_plate_clones\assembled_plates\XJF\20240418\' plate.exp '-subtraced_background'];
+plate.folder_out=dest_folder;
 
 plate.nc=length(metainfo.channel_sequence);
 plate.channel_index=metainfo.channel_sequence +1;
@@ -84,7 +84,9 @@ for well_count=1:plate.nwell
     for i_ch=1:plate.nc
          file_per_well=sprintf('%s\\%s\\well%03d_%s.tif',...
                   plate.folder_out, plate.channel(i_ch), well_idx, plate.channel(i_ch)); 
-         parfeval(@saveastiff, 0, well_assembled(:,:,i_ch), file_per_well, tiff_options);
+         %parfeval(@saveastiff, 0, well_assembled(:,:,i_ch), file_per_well, tiff_options);
+         saveastiff(well_assembled(:,:,i_ch), file_per_well, tiff_options);
     end
     %clear well_assembled file_per_well
+end
 end

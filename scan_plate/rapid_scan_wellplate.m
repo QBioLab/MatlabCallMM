@@ -1,19 +1,22 @@
-% Capture mulitpositions
+%% Capture mulitpositions
 % | Version | Commit
 % | 20240318| integrate mm gui @HF
 % | 20240416| renew metadata framework@HF
 
-metainfo_file = '\\data.qblab.science/datahub/hardware/MMConfigure/plate_calibration/A384well/plate4_20240424_rapid_scan_plate_A384_10x.json';
+addpath ../libe
+
+%metainfo_file = '\\data.qblab.science/datahub/hardware/MMConfigure/plate_calibration/A384well/plate4_20240424_rapid_scan_plate_A384_10x.json';
 %metainfo_file = 'C:/Users/qblab/Downloads/plate4_20240423_rapid_scan_plate_A384_10x.json';
+[file_name, file_dir]= uigetfile('.json');
+metainfo_file = [file_dir file_name];
 
 tic
-addpath 'C:/Users/qblab/Desktop/MMConfigure';
 clear metainfo_json metainfo
-metainfo_json = fileread(metainfo_file);
-metainfo = jsondecode(metainfo_json);
+metainfo = read_json(metainfo_file);
+metainfo.createdfrom = metainfo_file;
 sample_name=metainfo.sample_name;  
 data_dir = metainfo.data_dir;
-
+%% Initlize microscope
 if ~exist('mmc', 'var')
     % import micro-manage studio and mmcore here
     studio =org.micromanager.internal.MMStudio(false);
@@ -29,7 +32,6 @@ if ~exist('epi_led', 'var')
     fopen(epi_led);
 end
 
-% EXPERIMENT PARAMETERS
 tiff_options.overwrite = true;
 tiff_options.message = false;
 tiff_options.compress  = 'no';
@@ -83,7 +85,6 @@ mmc.setProperty('Camera-1', 'Port', 'Dynamic Range');
 mmc.setProperty('Camera-1', 'Trigger-Expose Out-Mux', channel_num)
 mmc.setProperty('Camera-1', 'TriggerMode', 'Edge Trigger');
 mmc.setProperty('FilterTurret1', 'Label', '5-89000');
-
 try
     fprintf(epi_led, led_seq_string); % send led control sequence
 catch
@@ -92,6 +93,7 @@ catch
     fprintf(epi_led, led_seq_string); % send led control sequence
 end
 
+%% continued acquisition
 tic;
 pos_idx = int32(1);
 cur_frame = int32(1);
@@ -106,7 +108,6 @@ end
 mmc.startSequenceAcquisition(frame_num, 0, true);
 mmc.sleep(1000);
 
-% continued acquisition
 x_um=metainfo.position_list(pos_idx).x_um;
 y_um=metainfo.position_list(pos_idx).y_um;
 mmc.setXYPosition(x_um, y_um);
@@ -166,14 +167,11 @@ disp(['Capture Finished: ' num2str(toc/3600) ' hr']);
 metainfo.log.tags_list=tags_list;
 metainfo.log.fname_list=fname_list;
 output_fname=sprintf("%s/%s.json", data_dir, sample_name);
-output_json_file = fopen(output_fname, 'w');
-output_json = jsonencode(metainfo);
-fprintf(output_json_file, output_json);
-fclose(output_json_file);
+save_json(output_fname, metainfo);
 
+%% Home microscope setting
 fprintf(epi_led, "&SQ0000#");
 mmc.setProperty('PFS', 'FocusMaintenance', 'Off');
-% move stage to origin position
 x_ori = metainfo.position_list(1).x_um;
 y_ori = metainfo.position_list(1).y_um;
 mmc.setXYPosition(x_ori, y_ori);
