@@ -3,19 +3,13 @@
 % | 20240318| integrate mm gui @HF
 % | 20240416| renew metadata framework@HF
 
-addpath ../libe
+addpath ../lib
 
 %metainfo_file = '\\data.qblab.science/datahub/hardware/MMConfigure/plate_calibration/A384well/plate4_20240424_rapid_scan_plate_A384_10x.json';
 %metainfo_file = 'C:/Users/qblab/Downloads/plate4_20240423_rapid_scan_plate_A384_10x.json';
-[file_name, file_dir]= uigetfile('.json');
-metainfo_file = [file_dir file_name];
-
 tic
-clear metainfo_json metainfo
-metainfo = read_json(metainfo_file);
-metainfo.createdfrom = metainfo_file;
-sample_name=metainfo.sample_name;  
-data_dir = metainfo.data_dir;
+clear metainfo_file metainfo_json metainfo
+
 %% Initlize microscope
 if ~exist('mmc', 'var')
     % import micro-manage studio and mmcore here
@@ -24,12 +18,23 @@ if ~exist('mmc', 'var')
     mmc.waitForSystem();
     warning("Micro-manager Opened")
     return;
+else
+    [file_name, file_dir]= uigetfile('.json');
+    metainfo_file = [file_dir file_name];
+    metainfo = read_json(metainfo_file);
+    metainfo.createdfrom = metainfo_file;
+    sample_name=metainfo.sample_name;  
+    data_dir = metainfo.data_dir;    
 end
 
 if ~exist('epi_led', 'var')
     % Connect to D-LED arduino trigger
     epi_led = serial('COM6', 'BaudRate', 115200);
     fopen(epi_led);
+end
+p = gcp;
+if ~p.Connected
+    parpool(3);
 end
 
 tiff_options.overwrite = true;
@@ -117,16 +122,16 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
     if mmc.getRemainingImageCount() > 0
         % obtain current from mm circliar buffer
         tagged= mmc.popNextTaggedImage();
-        ch_idx=mod(cur_frame, channel_num)+1;
-        pos_idx=ceil(cur_frame/channel_num);
+        ch_idx=rem(cur_frame-1, channel_num)+1;
+        pos_idx=ceil(double(cur_frame)/double(channel_num));% change double 
         name=metainfo.position_list(pos_idx).name;
         pos_uid = metainfo.position_list(pos_idx).id;
         metainfo.log.z_list(pos_idx)=z_last_PFS;
         metainfo.log.time_list(pos_idx)=toc;
         tag=jsondecode(tagged.tags.toString.toCharArray);
         tags_list=[tags_list tag];
-        fname=sprintf('%s/ch%d/%s_pos%dc%d.tiff', ...
-            data_dir, ch_idx, name, pos_uid, ch_idx);
+        fname=sprintf('%s/ch%d/%s_c%d.tiff', ...
+            data_dir, ch_idx, name, ch_idx);
         fname_list = [fname_list string(fname)]; 
         
         disp(['Sample:' sample_name ' pos:' name ...
@@ -144,19 +149,19 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
                 mmc.waitForSystem();   
                 z_last_PFS = mmc.getPosition('ZDrive');
             end
-        
-            % trigger next exposure
+        end
+        % trigger next exposure util the end
+        if cur_frame < frame_num
             trigger_camera(epi_led);
             cur_frame=cur_frame+1;
         end
-        
         % save file during next exposure
         img_raw=typecast(tagged.pix, 'uint16');
         img=uint16(reshape(img_raw, W, H));
         %saveastiff(img, fname, tiff_options); %blocking write
-        parfeval(@saveastiff, 0,img, fname, tiff_options);%non-blocking write
+        parfeval(@saveastiff, 0, img, fname, tiff_options);%non-blocking write
     else
-        mmc.sleep(50)
+        mmc.sleep(10)
     end
 end
 
