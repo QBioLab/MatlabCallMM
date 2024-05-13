@@ -1,14 +1,10 @@
-function mmc = initialize(config)
-        import mmcorej.*
-        mmc= CMMCore;
-        %config = 'config\MMConfig_Ti.cfg';
-        %config = 'C:\users\qblab\Documents\MMConfig_Ti.cfg';
-        mmc.loadSystemConfiguration(config);
-        mmc.waitForSystem();
-        mmc.setTimeoutMs(50000);
-        %mmc.enableDebugLog(true);
-        %mmc.setPrimaryLogFile('test.log');
-        %mmc.setProperty('Andor sCMOS Camera', 'Sensitivity/DynamicRange', '16-bit (low noise & high well capacity)'); 
-        % Set to 16bit
-        %mmc.getProperty('Andor sCMOS Camera', 'AuxiliaryOutSource (TTL I/O)');
-end
+function [mmc, trigger] = initialize(config)
+%% Initlize microscope
+% import micro-manage studio and mmcore here
+studio =org.micromanager.internal.MMStudio(false);
+mmc = studio.core();
+mmc.waitForSystem();
+
+% Connect to D-LED arduino trigger
+trigger = serial('COM6', 'BaudRate', 115200);
+fopen(trigger);

@@ -4,16 +4,14 @@
 % | 20240416| renew metadata framework@HF
 
 addpath ../lib
-
-%metainfo_file = '\\data.qblab.science/datahub/hardware/MMConfigure/plate_calibration/A384well/plate4_20240424_rapid_scan_plate_A384_10x.json';
-%metainfo_file = 'C:/Users/qblab/Downloads/plate4_20240423_rapid_scan_plate_A384_10x.json';
-tic
 clear metainfo_file metainfo_json metainfo
 
+tic
+%metainfo_file = 'C:/Users/qblab/Downloads/plate4_20240423_rapid_scan_plate_A384_10x.json';
 %% Initlize microscope
 if ~exist('mmc', 'var')
     % import micro-manage studio and mmcore here
-    studio =org.micromanager.internal.MMStudio(false);
+    studio =org.micromanager.internal.MMStudio(true);
     mmc = studio.core();
     mmc.waitForSystem();
     warning("Micro-manager Opened")
@@ -21,14 +19,14 @@ if ~exist('mmc', 'var')
 else
     [file_name, file_dir]= uigetfile('.json');
     metainfo_file = [file_dir file_name];
+    metainfo_file(strfind(metainfo_file,'\'))='/';% avoid json error
     metainfo = read_json(metainfo_file);
     metainfo.createdfrom = metainfo_file;
     sample_name=metainfo.sample_name;  
     data_dir = metainfo.data_dir;    
 end
 
-if ~exist('epi_led', 'var')
-    % Connect to D-LED arduino trigger
+if ~exist('epi_led', 'var') % Connect to D-LED arduino trigger
     epi_led = serial('COM6', 'BaudRate', 115200);
     fopen(epi_led);
 end
@@ -130,8 +128,8 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
         metainfo.log.time_list(pos_idx)=toc;
         tag=jsondecode(tagged.tags.toString.toCharArray);
         tags_list=[tags_list tag];
-        fname=sprintf('%s/ch%d/%s_c%d.tiff', ...
-            data_dir, ch_idx, name, ch_idx);
+        fname=sprintf('ch%d/%s_c%d.tiff', ...
+                    ch_idx, name, ch_idx);
         fname_list = [fname_list string(fname)]; 
         
         disp(['Sample:' sample_name ' pos:' name ...
@@ -159,7 +157,7 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
         img_raw=typecast(tagged.pix, 'uint16');
         img=uint16(reshape(img_raw, W, H));
         %saveastiff(img, fname, tiff_options); %blocking write
-        parfeval(@saveastiff, 0, img, fname, tiff_options);%non-blocking write
+        parfeval(@saveastiff, 0, img, [data_dir '/' fname], tiff_options);%non-blocking write
     else
         mmc.sleep(10)
     end

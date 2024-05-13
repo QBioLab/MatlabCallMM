@@ -1,17 +1,17 @@
 addpath '../../lib';
 
-json_fname = 'A384-10x-all_well-template.json';
+json_fname = 'A384-10x-well26_28-template_0501.json';
 %output_info.sample_name = "plate4-sto-mcherry-normal-medium";
 %output_info.sample_name = "plate1-sto-gfp-conditioned-medium";
 %output_info.sample_name = "plate2-sto-gfp-normal-medium";
 %output_info.sample_name = "plate3-sto-mcherry-conditioned-medium";
-output_info.sample_name = "the-name-of-plate";
-output_info.data_dir = ['//data.qblab.science/datahub/' output_info.sample_name];
+output_info.sample_name = "plate_threeWells_0501";
+output_info.data_dir = ['//data.qblab.science/datahub/xiajunfei/' output_info.sample_name];
 output_info.project_dir = "";
 output_info.exposure_sequence = [100, 200];
 output_info.channel_sequence = [2, 3];
 
-%%% Generate Well List
+%% Generate Well List
 filecenter_A384 = './20240317/assembled_plates/A384well_Scan_0317_4XAPO_Kinetix_Bf.mat';
 load(filecenter_A384,'four_corner_center0');
 well_center_xy_array_src = four_corner_center0;
@@ -43,7 +43,7 @@ for i=A384_well_list
     end
 end
 
-
+picked_well_list = 26:28
 %%% Generate Positions(view) for each well
 %?
 load ('Kinitex_25_A384_10XAPO.mat','c','index_x','index_y');
@@ -158,10 +158,4 @@ output_info.position_list = position_list;
 W = 3200; H = 3200;
 
 output_info.roi=[0, 0, W, H];%[x0, y0, width, height]
-output_json_file = fopen(json_fname, 'w');
-%output_json = jsonencode(output_info); 
-output_json = jsonencode(output_info, "PrettyPrint", true); 
-% PrettyPrint parameter only avaliable after Matlab2021 or Octave9
-
-fprintf(output_json_file, output_json);
-fclose(output_json_file)
+save_json(json_fname, output_info);

@@ -1,13 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Capture mulitpositions
 % | Version | Commit
-% | 20200601| low exposure change, add counte to break dead loop @HF
-% | 20200615| skip well center point @HF
-% | 20200624| Add multi color support
-% | 20200628| Rotate emission filter
-% | 20200730| For Autophagy project @ZY @HF
-% | 20201104| For organoid @HF
-% | 20201106| add autofocus @HF
+%   test      
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 data_dir = 'F:\td\20201106';
