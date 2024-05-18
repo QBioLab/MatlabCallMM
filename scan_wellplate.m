@@ -1,3 +1,6 @@
+addpath scan_plate
+addpath lib
+
 % Initlize microscope
 if ~exist('mmc', 'var')
     trigger_serial_port = 'COM6';
@@ -14,8 +17,8 @@ metainfo.createdfrom = metainfo_file;
 sample_name=metainfo.sample_name;
 data_dir = metainfo.data_dir;
 
-% start scaning
-output_metainfo = rapid_scan_wellplate_dev(mmc, trigger, metainfo);
+% start scaning %
+output_metainfo = rapid_scan_pvcam(mmc, trigger, metainfo);
 
 % save metainfo
 output_json_file = sprintf("%s/%s.json", data_dir, sample_name);

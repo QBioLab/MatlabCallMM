@@ -11,6 +11,7 @@ else % matlab
     %addpath jsonlab
     %json_txt = jsonencode(json_struct, 'PrettyPrint', true);
     json_txt = jsonencode(json_struct);
+    json_txt(strfind(json_txt,'\'))='/';% avoid json error
     json_txt = prettyjson(json_txt);
     fprintf(json_file, json_txt);
     fclose(json_file);

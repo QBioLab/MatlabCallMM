@@ -1,10 +1,8 @@
-function [output_metainfo]=rapid_scan_plate_dev(mmc, trigger, input_metainfo)
-%% Rapid scan well plate
+function [output_metainfo]=rapid_scan_pvcam(mmc, trigger, input_metainfo)
+%% Rapid scan all given positions using photometrics smart streaming
 % | Version | Commit
 % | 20240318| integrate mm gui @HF
 % | 20240416| renew metadata framework@HF
-
-addpath ../lib
 
 p = gcp;
 if ~p.Connected
@@ -22,7 +20,6 @@ roi_x0 = input_metainfo.roi(1);
 roi_y0 = input_metainfo.roi(2);
 roi_w = input_metainfo.roi(3);
 roi_h = input_metainfo.roi(4);
-chsetup = input_metainfo.chsetup;
 exposure_seq = input_metainfo.exposure_sequence;
 channel_seq = input_metainfo.channel_sequence;
 channel_num = int32(length(channel_seq));
@@ -41,8 +38,8 @@ y_ori = position_list(1).y_um;
 z_last_PFS = position_list(1).z_um;
 
 mmc.setXYPosition(x_ori, y_ori);
-%mmc.setProperty('XYStage', 'Speed', '51.00mm/sec');
-%mmc.setProperty('XYStage', 'Tolerance', '0.30um');
+mmc.setProperty('XYStage', 'Speed', '51.00mm/sec');
+mmc.setProperty('XYStage', 'Tolerance', '0.30um');
 mmc.waitForSystem(); 
 mmc.setProperty('PFS', 'FocusMaintenance', 'On');
 mmc.setROI(roi_x0, roi_y0, roi_w, roi_h);
@@ -84,7 +81,6 @@ cur_frame = int32(1);
 tags_list =[];
 fname_list = [];
 frame_num = channel_num * pos_num;
-pos_uid = position_list(pos_idx).id;
 
 if mmc.isSequenceRunning()
     mmc.stopSequenceAcquisition();
@@ -106,7 +102,6 @@ while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning())
         ch_idx = rem(cur_frame-1, channel_num)+1; % careful to change
         pos_idx = ceil(double(cur_frame)/double(channel_num));% apply double to avoid lose
         name = position_list(pos_idx).name;
-        pos_uid = position_list(pos_idx).id;
         output_metainfo.log.z_list(pos_idx)=z_last_PFS;
         output_metainfo.log.time_list(pos_idx)=toc;
         fname=sprintf('ch%d/%s_c%d.tiff', ch_idx, name, ch_idx);
@@ -150,6 +145,7 @@ mmc.stopSequenceAcquisition();
 disp(['Capture Finished: ' num2str(toc/3600) ' hr']);
 
 % record all position and setting infomation
+output_metainfo.camera_affine_matrix = string(mmc.getPixelSizeAffineAsString());
 output_metainfo.log.tags_list=tags_list;
 output_metainfo.log.fname_list=fname_list;
 

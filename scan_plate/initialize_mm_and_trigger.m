@@ -1,4 +1,4 @@
-function [mmc, trigger] = initialize(trigger_port)
+function [mmc, trigger] = initialize_mm_and_trigger(trigger_port)
 %% Initlize micro-manager
 % import micro-manage studio and mmcore here
 studio =org.micromanager.internal.MMStudio(false);
