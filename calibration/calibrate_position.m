@@ -21,24 +21,6 @@ for idx=1:position_num
     ori_position_matrix(3, idx) = 1;
 end
 
-% well xy center array if it exist
-has_well_center_info = false;
-well_num = 0;
-ori_well_center_matrix = '';
-if isfield(input_metainfo, 'well_plate')
-    if isfield(input_metainfo.well_plate, 'well_center_xy_array')
-        has_well_center_info = true;
-        well_center_array = input_metainfo.well_plate.well_center_xy_array;
-        well_num = length(well_center_array);
-        ori_well_center_matrix = zeros(3, well_num); 
-        for idx = 1:well_num
-            ori_well_center_matrix(1, idx)= well_center_array(idx, 1);
-            ori_well_center_matrix(2, idx)= well_center_array(idx, 2);
-            ori_well_center_matrix(3, idx)= 1;
-        end
-    end
-end
-
 % only use the third one to find affine matrix
 ref_position_num = 3;
 ori_ref_position_matrix = zeros(3, ref_position_num);
@@ -61,13 +43,6 @@ for idx=1:position_num
     updated_position_list(idx).y_um = updated_position_matrix(2, idx);
 end
 % check stage limit or not?
-if has_well_center_info
-    updated_well_center_matrix = affine_matrix * ori_well_center_matrix;
-    updated_metainfo.well_plate.well_center_xy_array = ...
-        updated_well_center_matrix(1:2, :)';
-      updated_view_list =  affine_matrix(1:2, 1:2) * input_metainfo.well_plate.view_list';
-      updated_metainfo.well_plate.view_list = updated_view_list';
-end
 
 %% store updated capture position list & calibration position list
 updated_metainfo.cali_plate.ref_point_list = new_ref_position_list;

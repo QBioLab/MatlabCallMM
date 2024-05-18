@@ -21,14 +21,16 @@ roi_y0 = input_metainfo.roi(2);
 roi_w = input_metainfo.roi(3);
 roi_h = input_metainfo.roi(4);
 exposure_seq = input_metainfo.exposure_sequence;
-channel_seq = input_metainfo.channel_sequence;
-channel_num = int32(length(channel_seq));
+chsetup = input_metainfo.chsetup;
+active_channel_seq = input_metainfo.active_channel_sequence;
+channel_num = int32(length(active_channel_seq));
 data_dir = input_metainfo.data_dir;
 
 % prelocate log information
 output_metainfo.log.time_list=zeros(pos_num, 1);
 output_metainfo.log.z_list=zeros(pos_num, 1);
 output_metainfo.log.pfs = mmc.getPosition('PFSOffset');
+output_metainfo.camera_affine_matrix = string(mmc.getPixelSizeAffineAsString());
 
 %% Initliaze Microscope
 % move to origin position     
@@ -46,15 +48,17 @@ mmc.setROI(roi_x0, roi_y0, roi_w, roi_h);
 W=mmc.getImageWidth();
 H=mmc.getImageHeight();
 
+% generate SMARTStreamingValues string and trigger string
 SMARTStreamingValues_ms = "";
 led_seq_string = "&SQ";
-for ch_idx=1:channel_num % generate SMARTStreamingValues string and trigger string
-    exposure=exposure_seq(ch_idx);
+for ch_count=1:channel_num 
+    exposure=exposure_seq(ch_count);
     SMARTStreamingValues_ms = SMARTStreamingValues_ms + sprintf("%0.3f;",exposure);
-    led_port=channel_seq(ch_idx);
+    ch_idx = active_channel_seq(ch_count);
+    led_port=chsetup(ch_idx).ex_port;
     led_seq_string = led_seq_string + sprintf("%1d", led_port);
 end
-for ch_idx=channel_num+1:4 % append remained channel to 0
+for ch_count=channel_num+1:4 % fill unused led port to 0
     led_seq_string = led_seq_string + sprintf("%1d", 0);
 end
 led_seq_string=led_seq_string + "#";
@@ -145,7 +149,6 @@ mmc.stopSequenceAcquisition();
 disp(['Capture Finished: ' num2str(toc/3600) ' hr']);
 
 % record all position and setting infomation
-output_metainfo.camera_affine_matrix = string(mmc.getPixelSizeAffineAsString());
 output_metainfo.log.tags_list=tags_list;
 output_metainfo.log.fname_list=fname_list;
 
