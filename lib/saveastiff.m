@@ -26,6 +26,9 @@ function res = saveastiff(data, path, options)
 % options.big 
 %   : true or FALSE, 
 %     Use 64 bit addressing and allows for files > 4GB
+% options.lock
+%   : true or FALSE, 
+%     Generate lock file to indicate we are writing tiff
 % 
 % Defalut value of 'options' is
 %     options.color     = false;
@@ -34,6 +37,7 @@ function res = saveastiff(data, path, options)
 %     options.append    = false;
 %     options.overwrite = false;
 %     options.big       = false;
+%     options.lock      = true;
 % 
 % res : Return value. It is 0 when the function is finished with no error.
 %       If an error is occured in the function, it will have a positive
@@ -76,12 +80,14 @@ if nargin < 3 % Use default options
     options.message = true;
     options.append = false;
     options.overwrite = false;
+    options.lock = true;
 end
-if ~isfield(options, 'message'),   options.message   = true; end
+if ~isfield(options, 'message'),   options.message   = true;  end
 if ~isfield(options, 'append'),    options.append    = false; end
 if ~isfield(options, 'compress'),  options.compress  = 'no';  end
 if ~isfield(options, 'color'),     options.color     = false; end
 if ~isfield(options, 'overwrite'), options.overwrite = false; end
+if ~isfield(options, 'lock'),      options.lock      = true;  end
 if  isfield(options, 'big') == 0,  options.big       = false; end
 switch class(data)
     case {'uint8', 'uint16', 'uint32', 'int8', 'int16', 'int32', 'single', 'double', 'uint64', 'int64'}
@@ -221,6 +227,9 @@ end
 %% Write image data to a file
 file_opening_error_count = 0;
 while ~exist('tfile', 'var')
+    if options.lock % Make a lock file
+        fopen([fname, fext, '.lock'], 'w')
+    end
     try
         if ~options.append % Make a new file
             s=whos('data');
@@ -267,6 +276,9 @@ for d = 1:depth
     end
 end
 tfile.close();
+if options.lock % delete lock file
+    delete([fname, fext, '.lock'])
+end
 if exist('path_parent', 'var'), cd(path_parent); end
 tElapsed = toc(tStart);
 if options.message
