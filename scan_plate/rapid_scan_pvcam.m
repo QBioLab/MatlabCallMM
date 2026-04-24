@@ -37,13 +37,13 @@ output_metainfo.camera_affine_matrix = string(mmc.getPixelSizeAffineAsString());
 mmc.setProperty('PFS', 'FocusMaintenance', 'Off');
 x_ori = position_list(1).x_um;
 y_ori = position_list(1).y_um;
-z_last_PFS = position_list(1).z_um;
 
 mmc.setXYPosition(x_ori, y_ori);
 mmc.setProperty('XYStage', 'Speed', '51.00mm/sec');
-mmc.setProperty('XYStage', 'Tolerance', '0.30um');
+mmc.setProperty('XYStage', 'Tolerance', 'Open');
 mmc.waitForSystem(); 
 mmc.setProperty('PFS', 'FocusMaintenance', 'On');
+z_last_PFS = mmc.getPosition('ZDrive');
 mmc.setROI(roi_x0, roi_y0, roi_w, roi_h);
 W=mmc.getImageWidth();
 H=mmc.getImageHeight();
@@ -56,7 +56,7 @@ for ch_count=1:channel_num
     SMARTStreamingValues_ms = SMARTStreamingValues_ms + sprintf("%0.3f;",exposure);
     ch_idx = active_channel_seq(ch_count);
     led_port=chsetup(ch_idx).ex_port;
-    led_seq_string = led_seq_string + sprintf("%1d", led_port);
+    led_seq_string = led_seq_string + sprintf("%s", led_port);
 end
 for ch_count=channel_num+1:4 % fill unused led port to 0
     led_seq_string = led_seq_string + sprintf("%1d", 0);
@@ -69,7 +69,7 @@ mmc.setProperty('Camera-1', 'SMARTStreamingValues[ms]', SMARTStreamingValues_ms)
 mmc.setProperty('Camera-1', 'Port', 'Dynamic Range');
 mmc.setProperty('Camera-1', 'Trigger-Expose Out-Mux', channel_num)
 mmc.setProperty('Camera-1', 'TriggerMode', 'Edge Trigger');
-mmc.setProperty('FilterTurret1', 'Label', '5-89000');
+mmc.setProperty('FilterTurret1', 'Label', '5-89000 - 00Empty');
 try
     fprintf(trigger, led_seq_string); % send led control sequence
 catch
