@@ -41,6 +41,7 @@ y_ori = position_list(1).y_um;
 mmc.setXYPosition(x_ori, y_ori);
 mmc.setProperty('XYStage', 'Speed', '51.00mm/sec');
 mmc.setProperty('XYStage', 'Tolerance', 'Open');
+mmc.setProperty('Turret1Shutter', 'State', '1'); % open shutter
 mmc.waitForSystem(); 
 mmc.setProperty('PFS', 'FocusMaintenance', 'On');
 z_last_PFS = mmc.getPosition('ZDrive');
